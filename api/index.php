@@ -103,6 +103,15 @@ $_SERVER['PGSSLMODE'] = 'require';
 putenv('DB_URL=');
 unset($_ENV['DB_URL'], $_SERVER['DB_URL'], $_ENV['DATABASE_URL'], $_SERVER['DATABASE_URL']);
 
+$sessionDomain = getenv('SESSION_DOMAIN');
+if (in_array($sessionDomain, ['null', 'none', '""', 'localhost'], true)) {
+    putenv('SESSION_DOMAIN=');
+    unset($_ENV['SESSION_DOMAIN'], $_SERVER['SESSION_DOMAIN']);
+}
+putenv('SESSION_SECURE_COOKIE=true');
+$_ENV['SESSION_SECURE_COOKIE'] = 'true';
+$_SERVER['SESSION_SECURE_COOKIE'] = 'true';
+
 // Check for missing APP_KEY
 $appKey = getenv('APP_KEY');
 if (! $appKey || $appKey === '""') {

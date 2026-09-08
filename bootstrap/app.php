@@ -56,7 +56,13 @@ $app->booting(function () use ($app): void {
     $config->set('database.connections.pgsql.sslmode', 'require');
     $config->set('database.connections.pgsql.url', null);
 
-    if (empty($config->get('mail.default'))) {
+    $sessionDomain = $config->get('session.domain');
+    if (in_array($sessionDomain, [null, '', 'null', 'none'], true)) {
+        $config->set('session.domain', null);
+    }
+    $config->set('session.secure', true);
+
+    if (empty($config->get('mail.default')) || in_array($config->get('mail.mailers.smtp.host'), ['127.0.0.1', 'localhost'], true)) {
         $config->set('mail.default', 'log');
     }
 
