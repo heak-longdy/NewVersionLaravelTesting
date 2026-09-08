@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, FolderKanban, LayoutGrid, Menu, Search, Users } from '@lucide/vue';
+import { BookOpen, Folder, FolderKanban, LayoutGrid, Menu, Search, Settings, UserCheck, Users } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -48,7 +49,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const page = usePage();
 const auth = computed(() => page.props.auth);
-const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+const { isCurrentUrl, isCurrentOrParentUrl, whenCurrentUrl } = useCurrentUrl();
 
 const activeItemStyles =
     'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
@@ -60,14 +61,26 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Customers',
-        href: '/customers',
-        icon: Users,
-    },
-    {
         title: 'File Manager',
         href: '/file-manager',
         icon: FolderKanban,
+    },
+    {
+        title: 'Setting',
+        href: '/users',
+        icon: Settings,
+        items: [
+            {
+                title: 'User',
+                href: '/users',
+                icon: UserCheck,
+            },
+            {
+                title: 'Customer',
+                href: '/customers',
+                icon: Users,
+            },
+        ],
     },
 ];
 
@@ -114,25 +127,66 @@ const rightNavItems: NavItem[] = [
                                 class="flex h-full flex-1 flex-col justify-between space-y-4 py-6"
                             >
                                 <nav class="-mx-3 space-y-1">
-                                    <Link
+                                    <template
                                         v-for="item in mainNavItems"
                                         :key="item.title"
-                                        :href="item.href"
-                                        class="hover:bg-accent flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium"
-                                        :class="
-                                            whenCurrentUrl(
-                                                item.href,
-                                                activeItemStyles,
-                                            )
-                                        "
                                     >
-                                        <component
-                                            v-if="item.icon"
-                                            :is="item.icon"
-                                            class="h-5 w-5"
-                                        />
-                                        {{ item.title }}
-                                    </Link>
+                                        <!-- Group with sub-items -->
+                                        <div
+                                            v-if="item.items && item.items.length"
+                                            class="space-y-1"
+                                        >
+                                            <div
+                                                class="flex items-center gap-x-3 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400"
+                                            >
+                                                <component
+                                                    v-if="item.icon"
+                                                    :is="item.icon"
+                                                    class="h-4 w-4"
+                                                />
+                                                {{ item.title }}
+                                            </div>
+                                            <Link
+                                                v-for="subItem in item.items"
+                                                :key="subItem.title"
+                                                :href="subItem.href"
+                                                class="hover:bg-accent flex items-center gap-x-3 rounded-lg py-2 pr-3 pl-6 text-sm font-medium"
+                                                :class="
+                                                    whenCurrentUrl(
+                                                        subItem.href,
+                                                        activeItemStyles,
+                                                    )
+                                                "
+                                            >
+                                                <component
+                                                    v-if="subItem.icon"
+                                                    :is="subItem.icon"
+                                                    class="h-4 w-4"
+                                                />
+                                                {{ subItem.title }}
+                                            </Link>
+                                        </div>
+
+                                        <!-- Single nav item -->
+                                        <Link
+                                            v-else
+                                            :href="item.href"
+                                            class="hover:bg-accent flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium"
+                                            :class="
+                                                whenCurrentUrl(
+                                                    item.href,
+                                                    activeItemStyles,
+                                                )
+                                            "
+                                        >
+                                            <component
+                                                v-if="item.icon"
+                                                :is="item.icon"
+                                                class="h-5 w-5"
+                                            />
+                                            {{ item.title }}
+                                        </Link>
+                                    </template>
                                 </nav>
                                 <div class="flex flex-col space-y-4">
                                     <a
@@ -166,34 +220,95 @@ const rightNavItems: NavItem[] = [
                         <NavigationMenuList
                             class="flex h-full items-stretch space-x-2"
                         >
-                            <NavigationMenuItem
+                            <template
                                 v-for="(item, index) in mainNavItems"
                                 :key="index"
-                                class="relative flex h-full items-center"
                             >
-                                <Link
-                                    :class="[
-                                        navigationMenuTriggerStyle(),
-                                        whenCurrentUrl(
-                                            item.href,
-                                            activeItemStyles,
-                                        ),
-                                        'h-9 cursor-pointer px-3',
-                                    ]"
-                                    :href="item.href"
+                                <!-- Submenu Item (e.g. Setting) -->
+                                <NavigationMenuItem
+                                    v-if="item.items && item.items.length"
+                                    class="relative flex h-full items-center"
                                 >
-                                    <component
-                                        v-if="item.icon"
-                                        :is="item.icon"
-                                        class="mr-2 h-4 w-4"
-                                    />
-                                    {{ item.title }}
-                                </Link>
-                                <div
-                                    v-if="isCurrentUrl(item.href)"
-                                    class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
-                                ></div>
-                            </NavigationMenuItem>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger as-child>
+                                            <button
+                                                :class="[
+                                                    navigationMenuTriggerStyle(),
+                                                    item.items.some((sub) =>
+                                                        isCurrentOrParentUrl(sub.href),
+                                                    )
+                                                        ? activeItemStyles
+                                                        : '',
+                                                    'flex h-9 cursor-pointer items-center gap-1.5 px-3',
+                                                ]"
+                                            >
+                                                <component
+                                                    v-if="item.icon"
+                                                    :is="item.icon"
+                                                    class="mr-1.5 h-4 w-4"
+                                                />
+                                                {{ item.title }}
+                                            </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start" class="w-48">
+                                            <DropdownMenuItem
+                                                v-for="sub in item.items"
+                                                :key="sub.title"
+                                                :as-child="true"
+                                            >
+                                                <Link
+                                                    :href="sub.href"
+                                                    class="flex w-full cursor-pointer items-center"
+                                                >
+                                                    <component
+                                                        v-if="sub.icon"
+                                                        :is="sub.icon"
+                                                        class="mr-2 h-4 w-4"
+                                                    />
+                                                    {{ sub.title }}
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <div
+                                        v-if="
+                                            item.items.some((sub) =>
+                                                isCurrentOrParentUrl(sub.href),
+                                            )
+                                        "
+                                        class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
+                                    ></div>
+                                </NavigationMenuItem>
+
+                                <!-- Regular Item -->
+                                <NavigationMenuItem
+                                    v-else
+                                    class="relative flex h-full items-center"
+                                >
+                                    <Link
+                                        :class="[
+                                            navigationMenuTriggerStyle(),
+                                            whenCurrentUrl(
+                                                item.href,
+                                                activeItemStyles,
+                                            ),
+                                            'h-9 cursor-pointer px-3',
+                                        ]"
+                                        :href="item.href"
+                                    >
+                                        <component
+                                            v-if="item.icon"
+                                            :is="item.icon"
+                                            class="mr-2 h-4 w-4"
+                                        />
+                                        {{ item.title }}
+                                    </Link>
+                                    <div
+                                        v-if="isCurrentUrl(item.href)"
+                                        class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
+                                    ></div>
+                                </NavigationMenuItem>
+                            </template>
                         </NavigationMenuList>
                     </NavigationMenu>
                 </div>

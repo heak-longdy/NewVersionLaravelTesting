@@ -48,6 +48,10 @@ defineOptions({
                 href: dashboard(),
             },
             {
+                title: 'Setting',
+                href: '/customers',
+            },
+            {
                 title: 'Customers',
                 href: index.url(),
             },

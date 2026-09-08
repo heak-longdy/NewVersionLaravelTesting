@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, FolderKanban, LayoutGrid, Users } from '@lucide/vue';
-import { index as customersIndex } from '@/actions/App/Http/Controllers/CustomerController';
+import { BookOpen, FolderGit2, FolderKanban, LayoutGrid, Settings, UserCheck, Users } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -25,14 +24,26 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Customers',
-        href: customersIndex.url(),
-        icon: Users,
-    },
-    {
         title: 'File Manager',
         href: '/file-manager',
         icon: FolderKanban,
+    },
+    {
+        title: 'Setting',
+        href: '/users',
+        icon: Settings,
+        items: [
+            {
+                title: 'User',
+                href: '/users',
+                icon: UserCheck,
+            },
+            {
+                title: 'Customer',
+                href: '/customers',
+                icon: Users,
+            },
+        ],
     },
 ];
 

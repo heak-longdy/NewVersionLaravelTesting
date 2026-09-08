@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FileManagerController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -39,6 +40,7 @@ Route::get('storage/{path}', function (string $path) {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+    Route::resource('users', UserController::class);
     Route::resource('customers', CustomerController::class);
 
     // FileManager Routes

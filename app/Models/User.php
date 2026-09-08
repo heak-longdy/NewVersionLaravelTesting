@@ -47,4 +47,28 @@ class User extends Authenticatable implements PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    /**
+     * Scope a query to search users by keyword.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<User>  $query
+     */
+    public function scopeSearch(\Illuminate\Database\Eloquent\Builder $query, ?string $search): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->when(filled($search), function (\Illuminate\Database\Eloquent\Builder $query) use ($search) {
+            $search = trim($search);
+            $driver = $query->getConnection()->getDriverName();
+            $operator = $driver === 'pgsql' ? 'ilike' : 'like';
+
+            $query->where(function (\Illuminate\Database\Eloquent\Builder $query) use ($search, $operator) {
+                if (is_numeric($search) || preg_match('/^#\d+$/', $search)) {
+                    $id = (int) ltrim($search, '#');
+                    $query->where('id', $id);
+                }
+
+                $query->orWhere('name', $operator, "%{$search}%")
+                    ->orWhere('email', $operator, "%{$search}%");
+            });
+        });
+    }
 }
