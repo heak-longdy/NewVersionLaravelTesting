@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Requests\FileManager\StoreFileItemRequest;
 use App\Http\Requests\FileManager\UpdateFileItemRequest;
 use App\Models\FileItem;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -18,6 +21,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileManagerController extends Controller
 {
+    public function __construct(
+        protected SupabaseStorageService $supabaseStorage
+    ) {}
     /**
      * Display a listing of files or recycle bin.
      */
@@ -158,8 +164,25 @@ class FileManagerController extends Controller
             $mimeType = $file->getMimeType() ?: 'application/octet-stream';
             $size = $file->getSize() ?: 0;
 
-            // Generate sanitized storage path in public disk
-            $storedPath = $file->store('file-manager', 'public');
+            // Upload to Supabase Storage if configured, or fallback to public disk
+            $storedDisk = 'public';
+            $storedPath = null;
+
+            if ($this->supabaseStorage->isConfigured()) {
+                $uniqueName = Str::random(40).($extension ? '.'.$extension : '');
+                $objectPath = 'file-manager/'.$uniqueName;
+                try {
+                    $this->supabaseStorage->upload($file, $objectPath);
+                    $storedDisk = 'supabase';
+                    $storedPath = $objectPath;
+                } catch (\Throwable $e) {
+                    Log::warning('Supabase upload failed, falling back to local public disk: '.$e->getMessage());
+                    $storedDisk = 'public';
+                    $storedPath = $file->store('file-manager', 'public');
+                }
+            } else {
+                $storedPath = $file->store('file-manager', 'public');
+            }
 
             // Default display name is original filename without extension, or request name for single upload
             $displayName = count($rawFiles) === 1 && filled($request->input('name'))
@@ -171,7 +194,7 @@ class FileManagerController extends Controller
                 'name' => $displayName,
                 'original_name' => $originalName,
                 'file_path' => $storedPath,
-                'disk' => 'public',
+                'disk' => $storedDisk,
                 'mime_type' => $mimeType,
                 'extension' => $extension ?: null,
                 'size' => $size,
@@ -228,15 +251,34 @@ class FileManagerController extends Controller
             /** @var UploadedFile $newFile */
             $newFile = $request->file('file');
 
-            // Delete old file from storage disk
-            if (Storage::disk($fileItem->disk)->exists($fileItem->file_path)) {
+            // Delete old file from storage
+            if ($fileItem->disk === 'supabase') {
+                $this->supabaseStorage->delete($fileItem->file_path);
+            } elseif (Storage::disk($fileItem->disk)->exists($fileItem->file_path)) {
                 Storage::disk($fileItem->disk)->delete($fileItem->file_path);
             }
 
-            $storedPath = $newFile->store('file-manager', 'public');
-            $fileItem->file_path = $storedPath;
+            $newExt = strtolower($newFile->getClientOriginalExtension());
+
+            if ($this->supabaseStorage->isConfigured()) {
+                $uniqueName = Str::random(40).($newExt ? '.'.$newExt : '');
+                $objectPath = 'file-manager/'.$uniqueName;
+                try {
+                    $this->supabaseStorage->upload($newFile, $objectPath);
+                    $fileItem->disk = 'supabase';
+                    $fileItem->file_path = $objectPath;
+                } catch (\Throwable $e) {
+                    Log::warning('Supabase update upload failed, falling back to local: '.$e->getMessage());
+                    $fileItem->file_path = $newFile->store('file-manager', 'public');
+                    $fileItem->disk = 'public';
+                }
+            } else {
+                $fileItem->file_path = $newFile->store('file-manager', 'public');
+                $fileItem->disk = 'public';
+            }
+
             $fileItem->original_name = $newFile->getClientOriginalName();
-            $fileItem->extension = strtolower($newFile->getClientOriginalExtension()) ?: null;
+            $fileItem->extension = $newExt ?: null;
             $fileItem->mime_type = $newFile->getMimeType() ?: 'application/octet-stream';
             $fileItem->size = $newFile->getSize() ?: 0;
         }
@@ -293,8 +335,10 @@ class FileManagerController extends Controller
         /** @var FileItem $fileItem */
         $fileItem = FileItem::onlyTrashed()->findOrFail($id);
 
-        // Delete physical file from storage disk
-        if (Storage::disk($fileItem->disk)->exists($fileItem->file_path)) {
+        // Delete physical file from storage
+        if ($fileItem->disk === 'supabase') {
+            $this->supabaseStorage->delete($fileItem->file_path);
+        } elseif (Storage::disk($fileItem->disk)->exists($fileItem->file_path)) {
             Storage::disk($fileItem->disk)->delete($fileItem->file_path);
         }
 
@@ -316,7 +360,9 @@ class FileManagerController extends Controller
         $trashedFiles = FileItem::onlyTrashed()->get();
 
         foreach ($trashedFiles as $file) {
-            if (Storage::disk($file->disk)->exists($file->file_path)) {
+            if ($file->disk === 'supabase') {
+                $this->supabaseStorage->delete($file->file_path);
+            } elseif (Storage::disk($file->disk)->exists($file->file_path)) {
                 Storage::disk($file->disk)->delete($file->file_path);
             }
             $file->forceDelete();
@@ -337,6 +383,14 @@ class FileManagerController extends Controller
     {
         /** @var FileItem $fileItem */
         $fileItem = FileItem::withTrashed()->findOrFail($id);
+
+        // Download from Supabase Storage
+        if ($fileItem->disk === 'supabase') {
+            return $this->supabaseStorage->download(
+                $fileItem->file_path,
+                $fileItem->original_name
+            );
+        }
 
         if (Storage::disk($fileItem->disk)->exists($fileItem->file_path)) {
             return Storage::disk($fileItem->disk)->download(

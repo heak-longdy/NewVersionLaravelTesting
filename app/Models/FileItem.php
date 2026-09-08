@@ -175,6 +175,14 @@ class FileItem extends Model
     {
         return Attribute::make(
             get: function (): string {
+                if ($this->disk === 'supabase') {
+                    $supabaseUrl = rtrim((string) (config('services.supabase.url') ?: env('SUPABASE_URL', env('NEXT_PUBLIC_SUPABASE_URL', ''))), '/');
+                    $bucket = config('services.supabase.bucket') ?: 'file-manager';
+                    $path = ltrim($this->file_path, '/');
+
+                    return "{$supabaseUrl}/storage/v1/object/public/{$bucket}/{$path}";
+                }
+
                 if ($this->disk === 'public') {
                     return '/storage/'.ltrim($this->file_path, '/');
                 }

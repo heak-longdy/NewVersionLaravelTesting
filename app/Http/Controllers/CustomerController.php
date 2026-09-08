@@ -5,17 +5,22 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
 use App\Models\Customer;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CustomerController extends Controller
 {
+    public function __construct(
+        protected SupabaseStorageService $supabaseStorage
+    ) {}
     /**
      * Display a listing of customers.
      */
@@ -91,8 +96,15 @@ class CustomerController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('customers', 'public');
-            $data['image'] = '/storage/'.$path;
+            if ($this->supabaseStorage->isConfigured()) {
+                $ext = $request->file('image')->getClientOriginalExtension();
+                $name = 'customers/'.Str::random(40).($ext ? '.'.$ext : '');
+                $this->supabaseStorage->upload($request->file('image'), $name);
+                $data['image'] = $this->supabaseStorage->getPublicUrl($name);
+            } else {
+                $path = $request->file('image')->store('customers', 'public');
+                $data['image'] = '/storage/'.$path;
+            }
         } elseif ($request->filled('image_url')) {
             $data['image'] = $request->input('image_url');
         }
@@ -139,8 +151,15 @@ class CustomerController extends Controller
                 $oldPath = str_replace('/storage/', '', $customer->image);
                 Storage::disk('public')->delete($oldPath);
             }
-            $path = $request->file('image')->store('customers', 'public');
-            $data['image'] = '/storage/'.$path;
+            if ($this->supabaseStorage->isConfigured()) {
+                $ext = $request->file('image')->getClientOriginalExtension();
+                $name = 'customers/'.Str::random(40).($ext ? '.'.$ext : '');
+                $this->supabaseStorage->upload($request->file('image'), $name);
+                $data['image'] = $this->supabaseStorage->getPublicUrl($name);
+            } else {
+                $path = $request->file('image')->store('customers', 'public');
+                $data['image'] = '/storage/'.$path;
+            }
         } elseif ($request->filled('image_url')) {
             $data['image'] = $request->input('image_url');
         } elseif ($request->boolean('remove_image')) {
