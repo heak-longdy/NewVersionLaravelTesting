@@ -59,6 +59,28 @@ putenv('APP_EVENTS_CACHE=' . $bootstrapCachePath . '/events.php');
 $_ENV['APP_EVENTS_CACHE'] = $bootstrapCachePath . '/events.php';
 $_SERVER['APP_EVENTS_CACHE'] = $bootstrapCachePath . '/events.php';
 
+// Ensure robust defaults if environment variables are unset or empty string
+$sessionDriver = getenv('SESSION_DRIVER');
+if (! $sessionDriver || $sessionDriver === '""') {
+    putenv('SESSION_DRIVER=cookie');
+    $_ENV['SESSION_DRIVER'] = 'cookie';
+    $_SERVER['SESSION_DRIVER'] = 'cookie';
+}
+
+$cacheStore = getenv('CACHE_STORE');
+if (! $cacheStore || $cacheStore === '""') {
+    putenv('CACHE_STORE=database');
+    $_ENV['CACHE_STORE'] = 'database';
+    $_SERVER['CACHE_STORE'] = 'database';
+}
+
+$queueConnection = getenv('QUEUE_CONNECTION');
+if (! $queueConnection || $queueConnection === '""') {
+    putenv('QUEUE_CONNECTION=sync');
+    $_ENV['QUEUE_CONNECTION'] = 'sync';
+    $_SERVER['QUEUE_CONNECTION'] = 'sync';
+}
+
 try {
     // Forward execution to Laravel's public entrypoint
     require __DIR__ . '/../public/index.php';
@@ -70,4 +92,12 @@ try {
     echo '<p style="color: #b91c1c; font-family: monospace; font-size: 16px;"><strong>' . htmlspecialchars($e->getMessage()) . '</strong></p>';
     echo '<p style="color: #4b5563; font-family: monospace; font-size: 14px;">In ' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . '</p>';
     echo '<pre style="background: #f3f4f6; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 12px;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+
+    $prev = $e->getPrevious();
+    if ($prev) {
+        echo '<h2 style="color: #b91c1c; margin-top: 24px;">Underlying Exception:</h2>';
+        echo '<p style="color: #b91c1c; font-family: monospace; font-size: 16px;"><strong>' . htmlspecialchars($prev->getMessage()) . '</strong></p>';
+        echo '<p style="color: #4b5563; font-family: monospace; font-size: 14px;">In ' . htmlspecialchars($prev->getFile()) . ':' . $prev->getLine() . '</p>';
+        echo '<pre style="background: #f3f4f6; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 12px;">' . htmlspecialchars($prev->getTraceAsString()) . '</pre>';
+    }
 }
