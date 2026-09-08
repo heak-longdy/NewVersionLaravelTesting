@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-supabase-app:latest
+    container_name: laravel_production_app
+    ports:
+      - "${PORT:-8080}:80"
+    environment:
+      APP_NAME: "${APP_NAME:-LaravelTesting}"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: "${APP_KEY}"
+      APP_URL: "${APP_URL:-http://localhost:8080}"
+      
+      # Supabase PostgreSQL Connection
+      DB_CONNECTION: pgsql
+      DB_HOST: "${DB_HOST:-aws-0-ap-northeast-1.pooler.supabase.com}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_DATABASE: "${DB_DATABASE:-postgres}"
+      DB_USERNAME: "${DB_USERNAME:-postgres.fcbfzlwqzirryfgnewho}"
+      DB_PASSWORD: "${DB_PASSWORD:-longdyheak1234}"
+      DB_SSLMODE: require
+
+      # State & Cache in Database
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+
+      # Auto run migrations on container boot
+      AUTO_MIGRATE: "true"
+
+      # Supabase Frontend client credentials (if needed)
+      VITE_SUPABASE_URL: "${VITE_SUPABASE_URL}"
+      VITE_SUPABASE_ANON_KEY: "${VITE_SUPABASE_ANON_KEY}"
+    restart: unless-stopped
