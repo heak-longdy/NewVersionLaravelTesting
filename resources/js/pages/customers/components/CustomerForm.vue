@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3';
-import { Camera, Trash2 } from '@lucide/vue';
+import { Camera, FolderKanban, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { index } from '@/actions/App/Http/Controllers/CustomerController';
+import FileManagerPickerModal from '@/components/FileManagerPickerModal.vue';
 import InputError from '@/components/InputError.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { useInitials } from '@/composables/useInitials';
-import type { Customer } from '@/types';
+import type { Customer, FileItem } from '@/types';
 
 const props = defineProps<{
     customer?: Customer;
@@ -22,11 +23,13 @@ const props = defineProps<{
 const { getInitials } = useInitials();
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const imagePreview = ref<string | null>(props.customer?.image ?? null);
+const isPickerOpen = ref(false);
 
 const form = useForm({
     name: props.customer?.name ?? '',
     email: props.customer?.email ?? '',
     image: null as File | null,
+    image_url: '',
     remove_image: false,
     phone: props.customer?.phone ?? '',
     company: props.customer?.company ?? '',
@@ -47,13 +50,25 @@ const onImageSelected = (event: Event) => {
     if (target.files && target.files[0]) {
         const file = target.files[0];
         form.image = file;
+        form.image_url = '';
         form.remove_image = false;
         imagePreview.value = URL.createObjectURL(file);
     }
 };
 
+const onFileFromManagerSelected = (file: FileItem) => {
+    form.image = null;
+    form.image_url = file.url;
+    form.remove_image = false;
+    imagePreview.value = file.url;
+    if (fileInputRef.value) {
+        fileInputRef.value.value = '';
+    }
+};
+
 const removeImage = () => {
     form.image = null;
+    form.image_url = '';
     form.remove_image = true;
     imagePreview.value = null;
     if (fileInputRef.value) {
@@ -116,6 +131,16 @@ const submit = () => {
                     >
                         <Camera class="size-4 mr-1.5" />
                         {{ imagePreview ? 'Change Photo' : 'Upload Photo' }}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        @click="isPickerOpen = true"
+                        :disabled="form.processing"
+                    >
+                        <FolderKanban class="size-4 mr-1.5 text-primary" />
+                        Browse File Manager
                     </Button>
                     <Button
                         v-if="imagePreview"
@@ -254,5 +279,12 @@ const submit = () => {
                 <span v-else>{{ customer ? 'Update Customer' : 'Create Customer' }}</span>
             </Button>
         </div>
+        <!-- FileManager Image Picker Modal -->
+        <FileManagerPickerModal
+            v-model:open="isPickerOpen"
+            category="image"
+            title="Select Customer Photo"
+            @select="onFileFromManagerSelected"
+        />
     </form>
 </template>

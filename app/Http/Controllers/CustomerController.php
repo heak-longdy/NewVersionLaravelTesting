@@ -93,7 +93,10 @@ class CustomerController extends Controller
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('customers', 'public');
             $data['image'] = '/storage/'.$path;
+        } elseif ($request->filled('image_url')) {
+            $data['image'] = $request->input('image_url');
         }
+        unset($data['image_url']);
 
         Customer::create($data);
         $this->invalidateCustomerCountCache();
@@ -132,19 +135,22 @@ class CustomerController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            if ($customer->image && str_starts_with($customer->image, '/storage/')) {
+            if ($customer->image && str_starts_with($customer->image, '/storage/customers/')) {
                 $oldPath = str_replace('/storage/', '', $customer->image);
                 Storage::disk('public')->delete($oldPath);
             }
             $path = $request->file('image')->store('customers', 'public');
             $data['image'] = '/storage/'.$path;
+        } elseif ($request->filled('image_url')) {
+            $data['image'] = $request->input('image_url');
         } elseif ($request->boolean('remove_image')) {
-            if ($customer->image && str_starts_with($customer->image, '/storage/')) {
+            if ($customer->image && str_starts_with($customer->image, '/storage/customers/')) {
                 $oldPath = str_replace('/storage/', '', $customer->image);
                 Storage::disk('public')->delete($oldPath);
             }
             $data['image'] = null;
         }
+        unset($data['image_url']);
 
         $statusChanged = isset($data['status']) && $data['status'] !== $customer->status;
         $customer->update($data);

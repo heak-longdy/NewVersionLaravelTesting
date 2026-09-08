@@ -5,8 +5,10 @@ use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 $app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,6 +30,17 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->render(function (PostTooLargeException $e, Request $request) {
+            $postLimit = ini_get('post_max_size');
+            $message = "The total upload payload exceeds the server's post limit ({$postLimit}). Please upload fewer or smaller files.";
+
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json(['message' => $message], 413);
+            }
+
+            return back()->withErrors(['files' => $message]);
+        });
     })->create();
 
 $app->booting(function () use ($app): void {
@@ -85,7 +98,7 @@ $app->booting(function () use ($app): void {
     }
 
     if ($app->environment('production') || ! empty($_ENV['VERCEL'])) {
-        \Illuminate\Support\Facades\URL::forceScheme('https');
+        URL::forceScheme('https');
     }
 });
 

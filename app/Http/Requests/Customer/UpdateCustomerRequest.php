@@ -34,6 +34,7 @@ class UpdateCustomerRequest extends FormRequest
             ],
             'phone' => ['nullable', 'string', 'max:50'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'image_url' => ['nullable', 'string', 'max:1000'],
             'remove_image' => ['nullable', 'boolean'],
             'company' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:500'],

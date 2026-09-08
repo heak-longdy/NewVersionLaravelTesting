@@ -104,40 +104,40 @@ const products = [
 <template>
     <Head title="Dashboard" />
 
-    <div class="min-h-screen bg-[#111927] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6">
+    <div class="min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8 space-y-6 transition-colors duration-200">
         <!-- ROW 1: Top Hero Banner & Two Mini Stat Cards -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- Hero Welcome Card (8 Cols) -->
-            <div class="lg:col-span-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1c2942] via-[#1b263b] to-[#172033] border border-slate-700/40 p-6 shadow-xl flex flex-col justify-between">
+            <div class="lg:col-span-8 relative overflow-hidden rounded-2xl bg-card border border-border/80 p-6 shadow-xs flex flex-col justify-between transition-all">
                 <div class="relative z-10 space-y-6 max-w-xl">
                     <!-- User Header -->
                     <div class="flex items-center gap-3">
                         <img
                             src="/images/user-avatar.jpg"
                             alt="Avatar"
-                            class="size-10 rounded-full border-2 border-cyan-400/50 object-cover shadow-md"
+                            class="size-11 rounded-full ring-2 ring-cyan-500/80 object-cover shadow-xs"
                         />
-                        <h2 class="text-lg font-semibold text-slate-100 tracking-tight">
-                            Welcome back {{ user?.name || 'Mathew Anderson' }}!
+                        <h2 class="text-lg font-semibold text-foreground tracking-tight">
+                            Welcome back {{ user?.name || 'Long dy' }}!
                         </h2>
                     </div>
 
                     <!-- Hero Stats -->
                     <div class="flex flex-wrap items-center gap-8 pt-2">
                         <div class="space-y-1">
-                            <div class="flex items-center gap-1.5 text-2xl sm:text-3xl font-bold text-white">
+                            <div class="flex items-center gap-1.5 text-2xl sm:text-3xl font-bold text-foreground">
                                 <span>$2,340</span>
-                                <ArrowUpRight class="size-5 text-cyan-400 stroke-[2.5]" />
+                                <ArrowUpRight class="size-5 text-cyan-500 stroke-[2.5]" />
                             </div>
-                            <p class="text-xs font-medium text-slate-400">Today's Sales</p>
+                            <p class="text-xs font-medium text-muted-foreground">Today's Sales</p>
                         </div>
 
                         <div class="space-y-1">
-                            <div class="flex items-center gap-1.5 text-2xl sm:text-3xl font-bold text-white">
+                            <div class="flex items-center gap-1.5 text-2xl sm:text-3xl font-bold text-foreground">
                                 <span>35%</span>
-                                <ArrowUpRight class="size-5 text-cyan-400 stroke-[2.5]" />
+                                <ArrowUpRight class="size-5 text-cyan-500 stroke-[2.5]" />
                             </div>
-                            <p class="text-xs font-medium text-slate-400">Performance</p>
+                            <p class="text-xs font-medium text-muted-foreground">Performance</p>
                         </div>
                     </div>
                 </div>
@@ -147,25 +147,25 @@ const products = [
                     <img
                         src="/images/dashboard-hero.jpg"
                         alt="Analytics Assistant"
-                        class="w-full h-full object-cover object-left opacity-90 mix-blend-screen"
+                        class="w-full h-full object-cover object-left opacity-80 mix-blend-luminosity dark:mix-blend-screen transition-opacity"
                     />
-                    <div class="absolute inset-0 bg-gradient-to-r from-[#1b263b] via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 bg-gradient-to-r from-card via-card/40 to-transparent"></div>
                 </div>
             </div>
 
             <!-- Top Right Grid (4 Cols: Expense & Sales Cards) -->
             <div class="lg:col-span-4 grid grid-cols-2 gap-4">
                 <!-- Expense Card -->
-                <div class="rounded-2xl bg-[#172236] border border-slate-700/40 p-5 shadow-lg flex flex-col justify-between">
+                <div class="rounded-2xl bg-card border border-border/80 p-5 shadow-xs flex flex-col justify-between transition-all">
                     <div>
-                        <h3 class="text-xl font-bold text-white">$10,230</h3>
-                        <p class="text-xs font-medium text-slate-400 mt-0.5">Expense</p>
+                        <h3 class="text-xl font-bold text-foreground">$10,230</h3>
+                        <p class="text-xs font-medium text-muted-foreground mt-0.5">Expense</p>
                     </div>
                     <!-- Donut Chart SVG -->
                     <div class="flex items-center justify-center py-2">
                         <svg class="size-20 -rotate-90" viewBox="0 0 36 36">
                             <!-- Background ring -->
-                            <circle cx="18" cy="18" r="14" fill="none" stroke="#1f2d47" stroke-width="4" />
+                            <circle cx="18" cy="18" r="14" fill="none" class="stroke-muted" stroke-width="4" />
                             <!-- Expense Cyan segment -->
                             <circle
                                 cx="18" cy="18" r="14"
@@ -190,10 +190,10 @@ const products = [
                 </div>
 
                 <!-- Sales Card -->
-                <div class="rounded-2xl bg-[#172236] border border-slate-700/40 p-5 shadow-lg flex flex-col justify-between">
+                <div class="rounded-2xl bg-card border border-border/80 p-5 shadow-xs flex flex-col justify-between transition-all">
                     <div>
-                        <h3 class="text-xl font-bold text-white">$65,432</h3>
-                        <p class="text-xs font-medium text-slate-400 mt-0.5">Sales</p>
+                        <h3 class="text-xl font-bold text-foreground">$65,432</h3>
+                        <p class="text-xs font-medium text-muted-foreground mt-0.5">Sales</p>
                     </div>
                     <!-- Mini Vertical Bar Chart -->
                     <div class="flex items-end justify-center gap-1.5 h-16 pt-2">
@@ -211,24 +211,24 @@ const products = [
         <!-- ROW 2: Revenue Updates, Sales Overview, & Monthly Earnings Column -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Card 1: Revenue Updates -->
-            <div class="rounded-2xl bg-[#172236] border border-slate-700/40 p-6 shadow-lg flex flex-col justify-between">
+            <div class="rounded-2xl bg-card border border-border/80 p-6 shadow-xs flex flex-col justify-between transition-all">
                 <div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <h3 class="text-base font-semibold text-white">Revenue Updates</h3>
-                            <p class="text-xs text-slate-400">Overview of Profit</p>
+                            <h3 class="text-base font-semibold text-foreground">Revenue Updates</h3>
+                            <p class="text-xs text-muted-foreground">Overview of Profit</p>
                         </div>
                     </div>
 
                     <!-- Legend -->
-                    <div class="flex items-center gap-4 mt-4 text-xs font-medium text-slate-300">
+                    <div class="flex items-center gap-4 mt-4 text-xs font-medium text-muted-foreground">
                         <div class="flex items-center gap-1.5">
                             <span class="size-2 rounded-full bg-cyan-400"></span>
-                            <span>Footware</span>
+                            <span class="text-foreground">Footware</span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <span class="size-2 rounded-full bg-blue-600"></span>
-                            <span>Fashionware</span>
+                            <span class="text-foreground">Fashionware</span>
                         </div>
                     </div>
                 </div>
@@ -237,57 +237,57 @@ const products = [
                 <div class="py-6">
                     <div class="grid grid-cols-5 gap-3 h-44 items-center relative">
                         <!-- Horizontal zero reference line -->
-                        <div class="absolute inset-x-0 top-1/2 border-t border-slate-700/50"></div>
+                        <div class="absolute inset-x-0 top-1/2 border-t border-border"></div>
 
                         <!-- Jan -->
                         <div class="flex flex-col items-center justify-center h-full gap-1 z-10">
                             <div class="h-10 w-2.5 bg-blue-500 rounded-t-sm self-center"></div>
                             <div class="h-12 w-2.5 bg-cyan-400 rounded-b-sm self-center"></div>
-                            <span class="text-[11px] text-slate-400 mt-2">Jan</span>
+                            <span class="text-[11px] text-muted-foreground mt-2">Jan</span>
                         </div>
 
                         <!-- Feb -->
                         <div class="flex flex-col items-center justify-center h-full gap-1 z-10">
                             <div class="h-16 w-2.5 bg-blue-500 rounded-t-sm self-center"></div>
                             <div class="h-6 w-2.5 bg-cyan-400 rounded-b-sm self-center"></div>
-                            <span class="text-[11px] text-slate-400 mt-2">Feb</span>
+                            <span class="text-[11px] text-muted-foreground mt-2">Feb</span>
                         </div>
 
                         <!-- Mar -->
                         <div class="flex flex-col items-center justify-center h-full gap-1 z-10">
                             <div class="h-12 w-2.5 bg-blue-500 rounded-t-sm self-center"></div>
                             <div class="h-14 w-2.5 bg-cyan-400 rounded-b-sm self-center"></div>
-                            <span class="text-[11px] text-slate-400 mt-2">Mar</span>
+                            <span class="text-[11px] text-muted-foreground mt-2">Mar</span>
                         </div>
 
                         <!-- Apr -->
                         <div class="flex flex-col items-center justify-center h-full gap-1 z-10">
                             <div class="h-10 w-2.5 bg-blue-500 rounded-t-sm self-center"></div>
                             <div class="h-8 w-2.5 bg-cyan-400 rounded-b-sm self-center"></div>
-                            <span class="text-[11px] text-slate-400 mt-2">Apr</span>
+                            <span class="text-[11px] text-muted-foreground mt-2">Apr</span>
                         </div>
 
                         <!-- May -->
                         <div class="flex flex-col items-center justify-center h-full gap-1 z-10">
                             <div class="h-8 w-2.5 bg-blue-500 rounded-t-sm self-center"></div>
                             <div class="h-10 w-2.5 bg-cyan-400 rounded-b-sm self-center"></div>
-                            <span class="text-[11px] text-slate-400 mt-2">May</span>
+                            <span class="text-[11px] text-muted-foreground mt-2">May</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Card 2: Sales Overview -->
-            <div class="rounded-2xl bg-[#172236] border border-slate-700/40 p-6 shadow-lg flex flex-col justify-between">
+            <div class="rounded-2xl bg-card border border-border/80 p-6 shadow-xs flex flex-col justify-between transition-all">
                 <div>
-                    <h3 class="text-base font-semibold text-white">Sales Overview</h3>
-                    <p class="text-xs text-slate-400">Every month</p>
+                    <h3 class="text-base font-semibold text-foreground">Sales Overview</h3>
+                    <p class="text-xs text-muted-foreground">Every month</p>
                 </div>
 
                 <!-- Big Circular Gauge with Center Total -->
                 <div class="flex items-center justify-center py-4 relative">
                     <svg class="size-44 -rotate-90" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#1f2d47" stroke-width="8" />
+                        <circle cx="50" cy="50" r="40" fill="none" class="stroke-muted" stroke-width="8" />
                         <circle
                             cx="50" cy="50" r="40"
                             fill="none"
@@ -305,28 +305,28 @@ const products = [
                     </svg>
                     <!-- Centered Amount -->
                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-2xl font-bold text-white tracking-tight">$500,458</span>
+                        <span class="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">$500,458</span>
                     </div>
                 </div>
 
                 <!-- Bottom Profit & Expense tiles -->
-                <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-700/40">
+                <div class="grid grid-cols-2 gap-3 pt-2 border-t border-border">
                     <div class="flex items-center gap-3">
-                        <div class="p-2 rounded-lg bg-blue-500/15 text-blue-400">
+                        <div class="p-2 rounded-lg bg-blue-500/10 text-blue-500">
                             <Layers class="size-4" />
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-white">$23,450</p>
-                            <p class="text-[11px] text-slate-400">Profit</p>
+                            <p class="text-sm font-bold text-foreground">$23,450</p>
+                            <p class="text-[11px] text-muted-foreground">Profit</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="p-2 rounded-lg bg-cyan-500/15 text-cyan-400">
+                        <div class="p-2 rounded-lg bg-cyan-500/10 text-cyan-500">
                             <Layers class="size-4" />
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-white">$23,450</p>
-                            <p class="text-[11px] text-slate-400">Expense</p>
+                            <p class="text-sm font-bold text-foreground">$23,450</p>
+                            <p class="text-[11px] text-muted-foreground">Expense</p>
                         </div>
                     </div>
                 </div>
@@ -337,51 +337,51 @@ const products = [
                 <!-- Top 2 Mini Stat Cards -->
                 <div class="grid grid-cols-2 gap-4">
                     <!-- Mini 1: Sales -->
-                    <div class="rounded-2xl bg-[#172236] border border-slate-700/40 p-4 shadow-lg space-y-3">
+                    <div class="rounded-2xl bg-card border border-border/80 p-4 shadow-xs space-y-3 transition-all">
                         <div class="flex items-center justify-between">
-                            <div class="p-2 rounded-lg bg-blue-500/15 text-blue-400">
+                            <div class="p-2 rounded-lg bg-blue-500/10 text-blue-500">
                                 <ShoppingCart class="size-4" />
                             </div>
                             <div class="flex items-center gap-1">
-                                <span class="size-1.5 rounded-full bg-blue-400"></span>
-                                <span class="size-1.5 rounded-full bg-blue-400/40"></span>
-                                <span class="size-1.5 rounded-full bg-blue-400/40"></span>
+                                <span class="size-1.5 rounded-full bg-blue-500"></span>
+                                <span class="size-1.5 rounded-full bg-blue-500/40"></span>
+                                <span class="size-1.5 rounded-full bg-blue-500/40"></span>
                             </div>
                         </div>
                         <div>
-                            <div class="flex items-center gap-1 text-lg font-bold text-white">
+                            <div class="flex items-center gap-1 text-lg font-bold text-foreground">
                                 <span>$16.5k</span>
-                                <ArrowUpRight class="size-4 text-cyan-400" />
+                                <ArrowUpRight class="size-4 text-cyan-500 stroke-[2.5]" />
                             </div>
-                            <p class="text-xs text-slate-400">Sales</p>
+                            <p class="text-xs text-muted-foreground">Sales</p>
                         </div>
                     </div>
 
                     <!-- Mini 2: Growth -->
-                    <div class="rounded-2xl bg-[#172236] border border-slate-700/40 p-4 shadow-lg space-y-3">
+                    <div class="rounded-2xl bg-card border border-border/80 p-4 shadow-xs space-y-3 transition-all">
                         <div class="flex items-center justify-between">
-                            <div class="p-2 rounded-lg bg-cyan-500/15 text-cyan-400">
+                            <div class="p-2 rounded-lg bg-cyan-500/10 text-cyan-500">
                                 <BarChart2 class="size-4" />
                             </div>
                             <!-- Mini line sparkline -->
                             <svg class="w-10 h-4" viewBox="0 0 40 16">
-                                <path d="M0 12 Q 10 2, 20 8 T 40 4" fill="none" stroke="#38bdf8" stroke-width="2" />
+                                <path d="M0 12 Q 10 2, 20 8 T 40 4" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" />
                             </svg>
                         </div>
                         <div>
-                            <div class="flex items-center gap-1 text-lg font-bold text-white">
+                            <div class="flex items-center gap-1 text-lg font-bold text-foreground">
                                 <span>24%</span>
-                                <ArrowUpRight class="size-4 text-cyan-400" />
+                                <ArrowUpRight class="size-4 text-cyan-500 stroke-[2.5]" />
                             </div>
-                            <p class="text-xs text-slate-400">Growth</p>
+                            <p class="text-xs text-muted-foreground">Growth</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Bottom: Monthly Earnings Card with Wave -->
-                <div class="rounded-2xl bg-[#172236] border border-slate-700/40 p-5 shadow-lg flex-1 flex flex-col justify-between overflow-hidden">
+                <div class="rounded-2xl bg-card border border-border/80 p-5 shadow-xs flex-1 flex flex-col justify-between overflow-hidden transition-all">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-base font-semibold text-white">Monthly Earnings</h3>
+                        <h3 class="text-base font-semibold text-foreground">Monthly Earnings</h3>
                         <Switch
                             id="monthly-toggle"
                             :checked="isMonthlyEarningsActive"
@@ -391,8 +391,8 @@ const products = [
 
                     <div class="pt-4">
                         <div class="flex items-baseline gap-2">
-                            <span class="text-2xl font-bold text-white">$6,820</span>
-                            <span class="flex items-center text-xs font-semibold text-emerald-400">
+                            <span class="text-2xl font-bold text-foreground">$6,820</span>
+                            <span class="flex items-center text-xs font-semibold text-emerald-500">
                                 <ArrowUpLeft class="size-3 stroke-[2.5]" />
                                 +9%
                             </span>
@@ -428,18 +428,25 @@ const products = [
         <!-- ROW 3: Weekly Stats, Yearly Sales, & Payment Gateways -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Card 1: Weekly Stats -->
-            <div class="rounded-2xl bg-[#172236] border border-slate-700/40 p-6 shadow-lg flex flex-col justify-between">
+            <div class="rounded-2xl bg-card border border-border/80 p-6 shadow-xs flex flex-col justify-between transition-all">
                 <div>
-                    <h3 class="text-base font-semibold text-white">Weekly Stats</h3>
-                    <p class="text-xs text-slate-400">Average sales</p>
+                    <h3 class="text-base font-semibold text-foreground">Weekly Stats</h3>
+                    <p class="text-xs text-muted-foreground">Average sales</p>
                 </div>
 
-                <!-- Smooth Wave Curve -->
+                <!-- Smooth Wave Curve (Two Arcs) -->
                 <div class="py-4">
-                    <svg class="w-full h-20" viewBox="0 0 200 60" preserveAspectRatio="none">
+                    <svg class="w-full h-16" viewBox="0 0 200 60" fill="none">
+                        <!-- Left Arc -->
                         <path
-                            d="M 0 50 Q 50 0, 100 50 T 200 30"
-                            fill="none"
+                            d="M 10 50 Q 55 10, 100 50"
+                            stroke="#3b82f6"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                        />
+                        <!-- Right Arc -->
+                        <path
+                            d="M 130 50 Q 165 20, 195 35"
                             stroke="#3b82f6"
                             stroke-width="2.5"
                             stroke-linecap="round"
@@ -449,180 +456,180 @@ const products = [
 
                 <!-- List Items with Badges -->
                 <div class="space-y-3 pt-2">
-                    <div class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-800/40 transition-colors">
+                    <div class="flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 transition-colors">
                         <div class="flex items-center gap-3">
-                            <div class="p-2 rounded-lg bg-blue-500/15 text-blue-400">
+                            <div class="p-2 rounded-lg bg-blue-500/10 text-blue-500">
                                 <Layers class="size-4" />
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-white">Top Sales</p>
-                                <p class="text-xs text-slate-400">Johnathan Doe</p>
+                                <p class="text-sm font-semibold text-foreground">Top Sales</p>
+                                <p class="text-xs text-muted-foreground">Johnathan Doe</p>
                             </div>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-300 text-xs font-semibold">+68</span>
+                        <span class="px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-500 text-xs font-semibold">+68</span>
                     </div>
 
-                    <div class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-800/40 transition-colors">
+                    <div class="flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 transition-colors">
                         <div class="flex items-center gap-3">
-                            <div class="p-2 rounded-lg bg-emerald-500/15 text-emerald-400">
+                            <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
                                 <Layers class="size-4" />
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-white">Best Seller</p>
-                                <p class="text-xs text-slate-400">Footware</p>
+                                <p class="text-sm font-semibold text-foreground">Best Seller</p>
+                                <p class="text-xs text-muted-foreground">Footware</p>
                             </div>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 text-xs font-semibold">+45</span>
+                        <span class="px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-500 text-xs font-semibold">+45</span>
                     </div>
 
-                    <div class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-800/40 transition-colors">
+                    <div class="flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 transition-colors">
                         <div class="flex items-center gap-3">
-                            <div class="p-2 rounded-lg bg-rose-500/15 text-rose-400">
+                            <div class="p-2 rounded-lg bg-rose-500/10 text-rose-500">
                                 <Layers class="size-4" />
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-white">Most Commented</p>
-                                <p class="text-xs text-slate-400">Fashionware</p>
+                                <p class="text-sm font-semibold text-foreground">Most Commented</p>
+                                <p class="text-xs text-muted-foreground">Fashionware</p>
                             </div>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-rose-500/20 text-rose-300 text-xs font-semibold">+14</span>
+                        <span class="px-2.5 py-1 rounded-md bg-rose-500/15 text-rose-500 text-xs font-semibold">+14</span>
                     </div>
                 </div>
             </div>
 
             <!-- Card 2: Yearly Sales -->
-            <div class="rounded-2xl bg-[#172236] border border-slate-700/40 p-6 shadow-lg flex flex-col justify-between">
+            <div class="rounded-2xl bg-card border border-border/80 p-6 shadow-xs flex flex-col justify-between transition-all">
                 <div>
-                    <h3 class="text-base font-semibold text-white">Yearly Sales</h3>
-                    <p class="text-xs text-slate-400">Total Sales</p>
+                    <h3 class="text-base font-semibold text-foreground">Yearly Sales</h3>
+                    <p class="text-xs text-muted-foreground">Total Sales</p>
                 </div>
 
                 <!-- Bar Chart (Apr to Sept with June highlighted) -->
                 <div class="py-6 flex items-end justify-between h-48 px-2 gap-2">
                     <!-- Apr -->
                     <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-4 bg-slate-700/60 rounded-t-md h-12"></div>
-                        <span class="text-[10px] text-slate-400">Apr</span>
+                        <div class="w-4 bg-muted rounded-t-md h-12"></div>
+                        <span class="text-[10px] text-muted-foreground">Apr</span>
                     </div>
                     <!-- May -->
                     <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-4 bg-slate-700/60 rounded-t-md h-20"></div>
-                        <span class="text-[10px] text-slate-400">May</span>
+                        <div class="w-4 bg-muted rounded-t-md h-20"></div>
+                        <span class="text-[10px] text-muted-foreground">May</span>
                     </div>
                     <!-- June (Highlight) -->
                     <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-4 bg-blue-500 rounded-t-md h-36 shadow-lg shadow-blue-500/25"></div>
-                        <span class="text-[10px] text-blue-400 font-semibold">June</span>
+                        <div class="w-4 bg-blue-600 rounded-t-md h-36 shadow-md shadow-blue-500/25"></div>
+                        <span class="text-[10px] text-blue-600 dark:text-blue-400 font-semibold">June</span>
                     </div>
                     <!-- July -->
                     <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-4 bg-slate-700/60 rounded-t-md h-16"></div>
-                        <span class="text-[10px] text-slate-400">July</span>
+                        <div class="w-4 bg-muted rounded-t-md h-16"></div>
+                        <span class="text-[10px] text-muted-foreground">July</span>
                     </div>
                     <!-- Aug -->
                     <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-4 bg-slate-700/60 rounded-t-md h-22"></div>
-                        <span class="text-[10px] text-slate-400">Aug</span>
+                        <div class="w-4 bg-muted rounded-t-md h-22"></div>
+                        <span class="text-[10px] text-muted-foreground">Aug</span>
                     </div>
                     <!-- Sept -->
                     <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-4 bg-slate-700/60 rounded-t-md h-14"></div>
-                        <span class="text-[10px] text-slate-400">Sept</span>
+                        <div class="w-4 bg-muted rounded-t-md h-14"></div>
+                        <span class="text-[10px] text-muted-foreground">Sept</span>
                     </div>
                 </div>
 
                 <!-- Bottom Summary -->
-                <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-700/40">
+                <div class="grid grid-cols-2 gap-3 pt-4 border-t border-border">
                     <div class="flex items-center gap-3">
-                        <div class="p-2 rounded-lg bg-blue-500/15 text-blue-400">
+                        <div class="p-2 rounded-lg bg-blue-500/10 text-blue-500">
                             <Layers class="size-4" />
                         </div>
                         <div>
-                            <p class="text-[11px] text-slate-400">Salary</p>
-                            <p class="text-sm font-bold text-white">$36,358</p>
+                            <p class="text-[11px] text-muted-foreground">Salary</p>
+                            <p class="text-sm font-bold text-foreground">$36,358</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="p-2 rounded-lg bg-cyan-500/15 text-cyan-400">
+                        <div class="p-2 rounded-lg bg-cyan-500/10 text-cyan-500">
                             <Layers class="size-4" />
                         </div>
                         <div>
-                            <p class="text-[11px] text-slate-400">Expance</p>
-                            <p class="text-sm font-bold text-white">$5,296</p>
+                            <p class="text-[11px] text-muted-foreground">Expance</p>
+                            <p class="text-sm font-bold text-foreground">$5,296</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Card 3: Payment Gateways -->
-            <div class="rounded-2xl bg-[#172236] border border-slate-700/40 p-6 shadow-lg flex flex-col justify-between">
+            <div class="rounded-2xl bg-card border border-border/80 p-6 shadow-xs flex flex-col justify-between transition-all">
                 <div>
-                    <h3 class="text-base font-semibold text-white">Payment Gateways</h3>
-                    <p class="text-xs text-slate-400">Platform For Income</p>
+                    <h3 class="text-base font-semibold text-foreground">Payment Gateways</h3>
+                    <p class="text-xs text-muted-foreground">Platform For Income</p>
                 </div>
 
                 <div class="space-y-4 my-auto py-2">
                     <!-- Paypal -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="size-9 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold text-sm">
+                            <div class="size-9 rounded-xl bg-blue-600/15 text-blue-600 flex items-center justify-center font-bold text-sm">
                                 P
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-white">Paypal</p>
-                                <p class="text-xs text-slate-400">Big Brands</p>
+                                <p class="text-sm font-semibold text-foreground">Paypal</p>
+                                <p class="text-xs text-muted-foreground">Big Brands</p>
                             </div>
                         </div>
-                        <span class="text-sm font-semibold text-emerald-400">+$6235</span>
+                        <span class="text-sm font-semibold text-emerald-500">+$6235</span>
                     </div>
 
                     <!-- Wallet -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="size-9 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center">
+                            <div class="size-9 rounded-xl bg-emerald-600/15 text-emerald-500 flex items-center justify-center">
                                 <Wallet class="size-4" />
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-white">Wallet</p>
-                                <p class="text-xs text-slate-400">Bill payment</p>
+                                <p class="text-sm font-semibold text-foreground">Wallet</p>
+                                <p class="text-xs text-muted-foreground">Bill payment</p>
                             </div>
                         </div>
-                        <span class="text-sm font-semibold text-rose-400">-$345</span>
+                        <span class="text-sm font-semibold text-rose-500">-$345</span>
                     </div>
 
                     <!-- Credit Card -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="size-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                            <div class="size-9 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center">
                                 <CreditCard class="size-4" />
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-white">Credit Card</p>
-                                <p class="text-xs text-slate-400">Money reversed</p>
+                                <p class="text-sm font-semibold text-foreground">Credit Card</p>
+                                <p class="text-xs text-muted-foreground">Money reversed</p>
                             </div>
                         </div>
-                        <span class="text-sm font-semibold text-emerald-400">+$2235</span>
+                        <span class="text-sm font-semibold text-emerald-500">+$2235</span>
                     </div>
 
                     <!-- Refund -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="size-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                            <div class="size-9 rounded-xl bg-rose-500/15 text-rose-500 flex items-center justify-center">
                                 <RotateCcw class="size-4" />
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-white">Refund</p>
-                                <p class="text-xs text-slate-400">Bill Payment</p>
+                                <p class="text-sm font-semibold text-foreground">Refund</p>
+                                <p class="text-xs text-muted-foreground">Bill Payment</p>
                             </div>
                         </div>
-                        <span class="text-sm font-semibold text-rose-400">-$32</span>
+                        <span class="text-sm font-semibold text-rose-500">-$32</span>
                     </div>
                 </div>
 
                 <!-- View All Transactions Button -->
                 <button
                     type="button"
-                    class="w-full py-2.5 px-4 rounded-xl border border-slate-700/60 bg-[#1b263b]/50 hover:bg-[#1b263b] text-xs font-semibold text-slate-300 hover:text-white transition-all shadow-xs"
+                    class="w-full py-2.5 px-4 rounded-xl border border-border bg-muted/40 hover:bg-muted text-xs font-semibold text-foreground transition-all shadow-xs cursor-pointer"
                 >
                     View all transactions
                 </button>
@@ -632,13 +639,13 @@ const products = [
         <!-- ROW 4: Recent Transactions & Product Performance -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- Recent Transactions (4 Cols) -->
-            <div class="lg:col-span-4 rounded-2xl bg-[#172236] border border-slate-700/40 p-6 shadow-lg flex flex-col justify-between">
+            <div class="lg:col-span-4 rounded-2xl bg-card border border-border/80 p-6 shadow-xs flex flex-col justify-between transition-all">
                 <div>
-                    <h3 class="text-base font-semibold text-white">Recent Transactions</h3>
+                    <h3 class="text-base font-semibold text-foreground">Recent Transactions</h3>
                 </div>
 
                 <!-- Timeline List -->
-                <div class="relative pl-6 space-y-6 pt-4 before:absolute before:left-2 before:top-6 before:bottom-3 before:w-0.5 before:bg-slate-700/50">
+                <div class="relative pl-6 space-y-6 pt-4 before:absolute before:left-2 before:top-6 before:bottom-3 before:w-0.5 before:bg-border">
                     <div
                         v-for="(t, i) in transactions"
                         :key="i"
@@ -646,21 +653,21 @@ const products = [
                     >
                         <!-- Timeline Node Dot -->
                         <span
-                            class="absolute -left-6 top-0.5 size-3.5 rounded-full border-2 bg-[#172236] z-10"
+                            class="absolute -left-6 top-0.5 size-3.5 rounded-full border-2 bg-card z-10"
                             :class="t.color"
                         ></span>
-                        <span class="font-semibold text-slate-400 whitespace-nowrap">{{ t.time }}</span>
-                        <span class="text-slate-200 leading-relaxed">{{ t.text }}</span>
+                        <span class="font-semibold text-muted-foreground whitespace-nowrap">{{ t.time }}</span>
+                        <span class="text-foreground leading-relaxed">{{ t.text }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- Product Performance Table (8 Cols) -->
-            <div class="lg:col-span-8 rounded-2xl bg-[#172236] border border-slate-700/40 p-6 shadow-lg space-y-6">
+            <div class="lg:col-span-8 rounded-2xl bg-card border border-border/80 p-6 shadow-xs space-y-6 transition-all">
                 <!-- Header with Month Dropdown -->
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-base font-semibold text-white">Product Performance</h3>
+                        <h3 class="text-base font-semibold text-foreground">Product Performance</h3>
                     </div>
 
                     <!-- Month Select Dropdown -->
@@ -668,20 +675,20 @@ const products = [
                         <button
                             type="button"
                             @click="showMonthDropdown = !showMonthDropdown"
-                            class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/60 text-xs font-medium text-slate-200 hover:text-white"
+                            class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/50 text-xs font-medium text-foreground hover:bg-muted cursor-pointer transition-colors"
                         >
                             <span>{{ selectedMonth }}</span>
-                            <ChevronDown class="size-3.5 text-slate-400" />
+                            <ChevronDown class="size-3.5 text-muted-foreground" />
                         </button>
                         <div
                             v-if="showMonthDropdown"
-                            class="absolute right-0 mt-1.5 w-36 rounded-xl border border-slate-700 bg-[#1b2538] shadow-2xl z-30 py-1"
+                            class="absolute right-0 mt-1.5 w-36 rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl z-30 py-1"
                         >
                             <button
                                 v-for="m in monthOptions"
                                 :key="m"
                                 @click="selectMonth(m)"
-                                class="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white"
+                                class="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-muted cursor-pointer"
                             >
                                 {{ m }}
                             </button>
@@ -693,7 +700,7 @@ const products = [
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="border-b border-slate-700/40 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                            <tr class="border-b border-border text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                                 <th class="pb-3 pr-4">Product</th>
                                 <th class="pb-3 px-4">Progress</th>
                                 <th class="pb-3 px-4">Priority</th>
@@ -701,11 +708,11 @@ const products = [
                                 <th class="pb-3 pl-4 text-right">Chart</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-800/60">
+                        <tbody class="divide-y divide-border">
                             <tr
                                 v-for="p in products"
                                 :key="p.name"
-                                class="hover:bg-slate-800/30 transition-colors"
+                                class="hover:bg-muted/40 transition-colors"
                             >
                                 <!-- Product & Category -->
                                 <td class="py-3.5 pr-4">
@@ -717,14 +724,14 @@ const products = [
                                             <component :is="p.icon" class="size-4" />
                                         </div>
                                         <div>
-                                            <p class="text-sm font-semibold text-white">{{ p.name }}</p>
-                                            <p class="text-xs text-slate-400">{{ p.category }}</p>
+                                            <p class="text-sm font-semibold text-foreground">{{ p.name }}</p>
+                                            <p class="text-xs text-muted-foreground">{{ p.category }}</p>
                                         </div>
                                     </div>
                                 </td>
 
                                 <!-- Progress -->
-                                <td class="py-3.5 px-4 text-xs font-semibold text-slate-300">
+                                <td class="py-3.5 px-4 text-xs font-semibold text-foreground">
                                     {{ p.progress }}
                                 </td>
 
@@ -739,7 +746,7 @@ const products = [
                                 </td>
 
                                 <!-- Budget -->
-                                <td class="py-3.5 px-4 text-xs font-semibold text-slate-300">
+                                <td class="py-3.5 px-4 text-xs font-semibold text-foreground">
                                     {{ p.budget }}
                                 </td>
 
