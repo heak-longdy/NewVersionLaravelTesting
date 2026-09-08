@@ -81,6 +81,13 @@ if (! $queueConnection || $queueConnection === '""') {
     $_SERVER['QUEUE_CONNECTION'] = 'sync';
 }
 
+$maintDriver = getenv('APP_MAINTENANCE_DRIVER');
+if (! $maintDriver || $maintDriver === '""') {
+    putenv('APP_MAINTENANCE_DRIVER=file');
+    $_ENV['APP_MAINTENANCE_DRIVER'] = 'file';
+    $_SERVER['APP_MAINTENANCE_DRIVER'] = 'file';
+}
+
 // Check for missing APP_KEY
 $appKey = getenv('APP_KEY');
 if (! $appKey || $appKey === '""') {
