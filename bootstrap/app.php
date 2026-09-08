@@ -87,6 +87,36 @@ $app->booting(function () use ($app): void {
     $config->set('database.connections.pgsql.sslmode', 'require');
     $config->set('database.connections.pgsql.url', null);
 
+    // Ensure Supabase PostgreSQL connection parameters are never empty or missing tenant identifier on Vercel
+    $dbName = (string) $config->get('database.connections.pgsql.database');
+    if (empty($dbName) || $dbName === 'laravel' || $dbName === '""') {
+        $config->set('database.connections.pgsql.database', 'postgres');
+    }
+
+    $dbHost = (string) $config->get('database.connections.pgsql.host');
+    if (empty($dbHost) || $dbHost === '127.0.0.1') {
+        $config->set('database.connections.pgsql.host', 'aws-0-ap-northeast-1.pooler.supabase.com');
+        $dbHost = 'aws-0-ap-northeast-1.pooler.supabase.com';
+    }
+
+    $dbPort = (string) $config->get('database.connections.pgsql.port');
+    if (empty($dbPort)) {
+        $config->set('database.connections.pgsql.port', '5432');
+    }
+
+    $dbUsername = (string) $config->get('database.connections.pgsql.username');
+    if (str_contains($dbHost, 'pooler.supabase.com')) {
+        if (empty($dbUsername) || $dbUsername === 'root' || ! str_contains($dbUsername, '.')) {
+            $baseUser = (! empty($dbUsername) && $dbUsername !== 'root') ? $dbUsername : 'postgres';
+            $config->set('database.connections.pgsql.username', $baseUser . '.fcbfzlwqzirryfgnewho');
+        }
+    }
+
+    $dbPassword = (string) $config->get('database.connections.pgsql.password');
+    if (empty($dbPassword)) {
+        $config->set('database.connections.pgsql.password', 'longdyheak1234');
+    }
+
     $sessionDomain = $config->get('session.domain');
     if (in_array($sessionDomain, [null, '', 'null', 'none'], true)) {
         $config->set('session.domain', null);
