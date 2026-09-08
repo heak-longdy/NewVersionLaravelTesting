@@ -53,10 +53,8 @@ $app->booting(function () use ($app): void {
         $config->set('database.default', 'pgsql');
     }
 
-    $sslmode = $config->get('database.connections.pgsql.sslmode');
-    if (! in_array($sslmode, ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], true)) {
-        $config->set('database.connections.pgsql.sslmode', 'require');
-    }
+    $config->set('database.connections.pgsql.sslmode', 'require');
+    $config->set('database.connections.pgsql.url', null);
 
     if (empty($config->get('mail.default'))) {
         $config->set('mail.default', 'log');

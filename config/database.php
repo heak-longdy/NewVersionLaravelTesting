@@ -86,7 +86,7 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
+            'url' => null,
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
@@ -96,9 +96,7 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => in_array(env('DB_SSLMODE'), ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], true)
-                ? env('DB_SSLMODE')
-                : 'require',
+            'sslmode' => 'require',
         ],
 
         'sqlsrv' => [
