@@ -67,10 +67,10 @@ $_SERVER['APP_EVENTS_CACHE'] = $bootstrapCachePath . '/events.php';
 
 // Ensure robust defaults if environment variables are unset or empty string
 $sessionDriver = getenv('SESSION_DRIVER');
-if (! $sessionDriver || $sessionDriver === '""') {
-    putenv('SESSION_DRIVER=cookie');
-    $_ENV['SESSION_DRIVER'] = 'cookie';
-    $_SERVER['SESSION_DRIVER'] = 'cookie';
+if (! $sessionDriver || $sessionDriver === '""' || $sessionDriver === 'cookie') {
+    putenv('SESSION_DRIVER=database');
+    $_ENV['SESSION_DRIVER'] = 'database';
+    $_SERVER['SESSION_DRIVER'] = 'database';
 }
 
 $cacheStore = getenv('CACHE_STORE');

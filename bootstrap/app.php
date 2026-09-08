@@ -33,8 +33,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
 $app->booting(function () use ($app): void {
     $config = $app->make('config');
 
-    if (empty($config->get('session.driver'))) {
-        $config->set('session.driver', 'cookie');
+    if (empty($config->get('session.driver')) || $config->get('session.driver') === 'cookie') {
+        $config->set('session.driver', 'database');
     }
 
     if (empty($config->get('app.maintenance.driver'))) {
