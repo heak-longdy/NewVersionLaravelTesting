@@ -49,6 +49,12 @@ $app->booting(function () use ($app): void {
         $config->set('hashing.driver', 'bcrypt');
     }
 
+    $rounds = (int) $config->get('hashing.bcrypt.rounds', 10);
+    if ($rounds < 4 || $rounds > 31) {
+        $rounds = 10;
+    }
+    $config->set('hashing.bcrypt.rounds', $rounds);
+
     if (empty($config->get('database.default'))) {
         $config->set('database.default', 'pgsql');
     }

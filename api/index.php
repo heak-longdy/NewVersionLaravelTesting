@@ -112,6 +112,10 @@ putenv('SESSION_SECURE_COOKIE=true');
 $_ENV['SESSION_SECURE_COOKIE'] = 'true';
 $_SERVER['SESSION_SECURE_COOKIE'] = 'true';
 
+putenv('BCRYPT_ROUNDS=10');
+$_ENV['BCRYPT_ROUNDS'] = '10';
+$_SERVER['BCRYPT_ROUNDS'] = '10';
+
 // Check for missing APP_KEY
 $appKey = getenv('APP_KEY');
 if (! $appKey || $appKey === '""') {
