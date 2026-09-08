@@ -81,6 +81,24 @@ if (! $queueConnection || $queueConnection === '""') {
     $_SERVER['QUEUE_CONNECTION'] = 'sync';
 }
 
+// Check for missing APP_KEY
+$appKey = getenv('APP_KEY');
+if (! $appKey || $appKey === '""') {
+    http_response_code(500);
+    echo '<div style="font-family: system-ui, sans-serif; padding: 30px; max-width: 700px; margin: 40px auto; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">';
+    echo '<h2 style="color: #9f1239; margin-top: 0;">Missing APP_KEY Environment Variable</h2>';
+    echo '<p style="color: #4c0519; font-size: 15px;">Your Vercel deployment does not have an <code>APP_KEY</code> configured. Laravel cannot start without an encryption key.</p>';
+    echo '<p style="color: #4c0519; font-size: 14px;">Go to <strong>Vercel Dashboard &rarr; Project Settings &rarr; Environment Variables</strong> and add:</p>';
+    echo '<pre style="background: #ffffff; padding: 14px; border-radius: 6px; border: 1px solid #fda4af; font-size: 13px; color: #111827;">APP_KEY=base64:7/szogsa/WYTajwWVe44UbUEakCi89QwPXZJ73jduxo=</pre>';
+    echo '</div>';
+    exit;
+}
+
+// Force APP_DEBUG=true so Laravel displays the full error screen instead of a generic "500 Server Error"
+putenv('APP_DEBUG=true');
+$_ENV['APP_DEBUG'] = 'true';
+$_SERVER['APP_DEBUG'] = 'true';
+
 try {
     // Forward execution to Laravel's public entrypoint
     require __DIR__ . '/../public/index.php';
