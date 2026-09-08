@@ -124,6 +124,49 @@ $_SERVER['PGSSLMODE'] = 'require';
 putenv('DB_URL=');
 unset($_ENV['DB_URL'], $_SERVER['DB_URL'], $_ENV['DATABASE_URL'], $_SERVER['DATABASE_URL']);
 
+// Normalize Supabase PostgreSQL database environment variables
+$dbConn = getenv('DB_CONNECTION');
+if (! $dbConn || $dbConn === '""') {
+    putenv('DB_CONNECTION=pgsql');
+    $_ENV['DB_CONNECTION'] = 'pgsql';
+    $_SERVER['DB_CONNECTION'] = 'pgsql';
+}
+
+$dbDatabase = getenv('DB_DATABASE');
+if (! $dbDatabase || $dbDatabase === '""' || $dbDatabase === "''") {
+    putenv('DB_DATABASE=postgres');
+    $_ENV['DB_DATABASE'] = 'postgres';
+    $_SERVER['DB_DATABASE'] = 'postgres';
+}
+
+$dbPort = getenv('DB_PORT');
+if (! $dbPort || $dbPort === '""') {
+    putenv('DB_PORT=5432');
+    $_ENV['DB_PORT'] = '5432';
+    $_SERVER['DB_PORT'] = '5432';
+}
+
+// Supabase Connection Pooler (Supavisor) requires username to include the tenant project ref: postgres.<project-ref>
+$dbHost = getenv('DB_HOST') ?: '';
+$dbUser = getenv('DB_USERNAME');
+if (str_contains($dbHost, 'pooler.supabase.com')) {
+    if (! $dbUser || $dbUser === '""' || ! str_contains($dbUser, '.')) {
+        $supabaseUrl = getenv('SUPABASE_URL') ?: getenv('NEXT_PUBLIC_SUPABASE_URL') ?: '';
+        $projectRef = 'fcbfzlwqzirryfgnewho';
+        if ($supabaseUrl && preg_match('#https?://([a-z0-9]+)\.supabase\.co#i', $supabaseUrl, $matches)) {
+            $projectRef = $matches[1];
+        }
+
+        $baseUser = ($dbUser && $dbUser !== '""') ? $dbUser : 'postgres';
+        $fullUser = $baseUser . '.' . $projectRef;
+
+        putenv('DB_USERNAME=' . $fullUser);
+        $_ENV['DB_USERNAME'] = $fullUser;
+        $_SERVER['DB_USERNAME'] = $fullUser;
+    }
+}
+
+
 $sessionDomain = getenv('SESSION_DOMAIN');
 if (in_array($sessionDomain, ['null', 'none', '""', 'localhost'], true)) {
     putenv('SESSION_DOMAIN=');
