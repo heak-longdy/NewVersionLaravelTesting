@@ -13,6 +13,7 @@ declare(strict_types=1);
 $storagePath = '/tmp/storage';
 $requiredDirectories = [
     $storagePath . '/app',
+    $storagePath . '/bootstrap/cache',
     $storagePath . '/framework/views',
     $storagePath . '/framework/cache',
     $storagePath . '/framework/cache/data',
@@ -36,5 +37,37 @@ putenv('VIEW_COMPILED_PATH=' . $viewPath);
 $_ENV['VIEW_COMPILED_PATH'] = $viewPath;
 $_SERVER['VIEW_COMPILED_PATH'] = $viewPath;
 
-// Forward execution to Laravel's public entrypoint
-require __DIR__ . '/../public/index.php';
+// Redirect bootstrap/cache to writable /tmp directory to avoid read-only filesystem errors
+$bootstrapCachePath = $storagePath . '/bootstrap/cache';
+putenv('APP_PACKAGES_CACHE=' . $bootstrapCachePath . '/packages.php');
+$_ENV['APP_PACKAGES_CACHE'] = $bootstrapCachePath . '/packages.php';
+$_SERVER['APP_PACKAGES_CACHE'] = $bootstrapCachePath . '/packages.php';
+
+putenv('APP_SERVICES_CACHE=' . $bootstrapCachePath . '/services.php');
+$_ENV['APP_SERVICES_CACHE'] = $bootstrapCachePath . '/services.php';
+$_SERVER['APP_SERVICES_CACHE'] = $bootstrapCachePath . '/services.php';
+
+putenv('APP_CONFIG_CACHE=' . $bootstrapCachePath . '/config.php');
+$_ENV['APP_CONFIG_CACHE'] = $bootstrapCachePath . '/config.php';
+$_SERVER['APP_CONFIG_CACHE'] = $bootstrapCachePath . '/config.php';
+
+putenv('APP_ROUTES_CACHE=' . $bootstrapCachePath . '/routes-v7.php');
+$_ENV['APP_ROUTES_CACHE'] = $bootstrapCachePath . '/routes-v7.php';
+$_SERVER['APP_ROUTES_CACHE'] = $bootstrapCachePath . '/routes-v7.php';
+
+putenv('APP_EVENTS_CACHE=' . $bootstrapCachePath . '/events.php');
+$_ENV['APP_EVENTS_CACHE'] = $bootstrapCachePath . '/events.php';
+$_SERVER['APP_EVENTS_CACHE'] = $bootstrapCachePath . '/events.php';
+
+try {
+    // Forward execution to Laravel's public entrypoint
+    require __DIR__ . '/../public/index.php';
+} catch (\Throwable $e) {
+    error_log((string) $e);
+    http_response_code(500);
+
+    echo '<h1>Server Error (500)</h1>';
+    echo '<p style="color: #b91c1c; font-family: monospace; font-size: 16px;"><strong>' . htmlspecialchars($e->getMessage()) . '</strong></p>';
+    echo '<p style="color: #4b5563; font-family: monospace; font-size: 14px;">In ' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . '</p>';
+    echo '<pre style="background: #f3f4f6; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 12px;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+}
