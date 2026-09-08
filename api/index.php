@@ -73,6 +73,27 @@ if (! $sessionDriver || $sessionDriver === '""' || $sessionDriver === 'cookie') 
     $_SERVER['SESSION_DRIVER'] = 'database';
 }
 
+$sessionLifetime = getenv('SESSION_LIFETIME');
+if (! $sessionLifetime || $sessionLifetime === '""' || (int) $sessionLifetime <= 0) {
+    putenv('SESSION_LIFETIME=120');
+    $_ENV['SESSION_LIFETIME'] = '120';
+    $_SERVER['SESSION_LIFETIME'] = '120';
+}
+
+$sessionCookie = getenv('SESSION_COOKIE');
+if (! $sessionCookie || $sessionCookie === '""' || $sessionCookie === '-session') {
+    putenv('SESSION_COOKIE=laravel_session');
+    $_ENV['SESSION_COOKIE'] = 'laravel_session';
+    $_SERVER['SESSION_COOKIE'] = 'laravel_session';
+}
+
+$appName = getenv('APP_NAME');
+if (! $appName || $appName === '""') {
+    putenv('APP_NAME=Laravel');
+    $_ENV['APP_NAME'] = 'Laravel';
+    $_SERVER['APP_NAME'] = 'Laravel';
+}
+
 $cacheStore = getenv('CACHE_STORE');
 if (! $cacheStore || $cacheStore === '""') {
     putenv('CACHE_STORE=database');

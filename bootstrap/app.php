@@ -37,6 +37,18 @@ $app->booting(function () use ($app): void {
         $config->set('session.driver', 'database');
     }
 
+    $sessionLifetime = (int) $config->get('session.lifetime', 120);
+    if ($sessionLifetime <= 0) {
+        $config->set('session.lifetime', 120);
+    }
+
+    $sessionCookie = (string) $config->get('session.cookie');
+    if (empty($sessionCookie) || $sessionCookie === '-session' || $sessionCookie === '""') {
+        $config->set('session.cookie', 'laravel_session');
+    }
+
+    $config->set('session.expire_on_close', false);
+
     if (empty($config->get('app.maintenance.driver'))) {
         $config->set('app.maintenance.driver', 'file');
     }
