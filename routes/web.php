@@ -7,23 +7,31 @@ use Illuminate\Support\Facades\Storage;
 
 Route::inertia('/', 'Welcome')->name('home');
 
-// Storage Fallback Route (serves storage assets if requests reach PHP/Vercel serverless)
+// Storage Route (serves storage assets in serverless/Vercel environments)
 Route::get('storage/{path}', function (string $path) {
-    // 1. Check in public/storage
-    $publicPath = public_path('storage/'.$path);
-    if (file_exists($publicPath) && ! is_dir($publicPath)) {
-        return response()->file($publicPath);
-    }
+    // Sanitize path to prevent directory traversal
+    $path = str_replace(['../', '..\\'], '', $path);
+    $path = ltrim($path, '/');
 
-    // 2. Check in base repository storage (deployed in Vercel /var/task)
+    $headers = [
+        'Cache-Control' => 'public, max-age=86400, stale-while-revalidate=604800',
+    ];
+
+    // 1. Check in base repository storage (deployed in Vercel /var/task)
     $repoPath = base_path('storage/app/public/'.$path);
     if (file_exists($repoPath) && ! is_dir($repoPath)) {
-        return response()->file($repoPath);
+        return response()->file($repoPath, $headers);
     }
 
-    // 3. Check public disk
+    // 2. Check in public/storage
+    $publicPath = public_path('storage/'.$path);
+    if (file_exists($publicPath) && ! is_dir($publicPath)) {
+        return response()->file($publicPath, $headers);
+    }
+
+    // 3. Check public disk (/tmp/storage on Vercel)
     if (Storage::disk('public')->exists($path)) {
-        return Storage::disk('public')->response($path);
+        return Storage::disk('public')->response($path, null, $headers);
     }
 
     abort(404);
