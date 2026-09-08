@@ -96,7 +96,9 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslmode' => in_array(env('DB_SSLMODE'), ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], true)
+                ? env('DB_SSLMODE')
+                : 'require',
         ],
 
         'sqlsrv' => [

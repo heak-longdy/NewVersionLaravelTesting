@@ -94,6 +94,13 @@ if (! $maintDriver || $maintDriver === '""') {
     $_SERVER['APP_MAINTENANCE_DRIVER'] = 'file';
 }
 
+$sslmode = getenv('DB_SSLMODE');
+if (! in_array($sslmode, ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], true)) {
+    putenv('DB_SSLMODE=require');
+    $_ENV['DB_SSLMODE'] = 'require';
+    $_SERVER['DB_SSLMODE'] = 'require';
+}
+
 // Check for missing APP_KEY
 $appKey = getenv('APP_KEY');
 if (! $appKey || $appKey === '""') {
