@@ -37,6 +37,12 @@ putenv('VIEW_COMPILED_PATH=' . $viewPath);
 $_ENV['VIEW_COMPILED_PATH'] = $viewPath;
 $_SERVER['VIEW_COMPILED_PATH'] = $viewPath;
 
+// Normalize HTTPS behind Vercel edge reverse proxy
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $_SERVER['HTTPS'] = 'on';
+    $_SERVER['SERVER_PORT'] = '443';
+}
+
 // Redirect bootstrap/cache to writable /tmp directory to avoid read-only filesystem errors
 $bootstrapCachePath = $storagePath . '/bootstrap/cache';
 putenv('APP_PACKAGES_CACHE=' . $bootstrapCachePath . '/packages.php');

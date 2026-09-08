@@ -15,6 +15,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
@@ -54,6 +55,10 @@ $app->booting(function () use ($app): void {
 
     if (empty($config->get('mail.default'))) {
         $config->set('mail.default', 'log');
+    }
+
+    if ($app->environment('production') || ! empty($_ENV['VERCEL'])) {
+        \Illuminate\Support\Facades\URL::forceScheme('https');
     }
 });
 
