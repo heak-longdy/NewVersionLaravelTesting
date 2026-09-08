@@ -176,7 +176,11 @@ class FileItem extends Model
         return Attribute::make(
             get: function (): string {
                 if ($this->disk === 'public') {
-                    return Storage::disk('public')->url($this->file_path);
+                    return '/storage/'.ltrim($this->file_path, '/');
+                }
+
+                if ($this->disk === 's3') {
+                    return Storage::disk('s3')->url($this->file_path);
                 }
 
                 return route('file-manager.download', $this->id);

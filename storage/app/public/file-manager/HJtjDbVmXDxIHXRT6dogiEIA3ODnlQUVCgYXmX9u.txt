@@ -1,0 +1,186 @@
+# Implementation Plan: Asset Ownership, Registration Card & Vignette Control Report
+
+Enhance the Core Banking System (Tonle) to capture physical vehicle registration card custody ("កាតគ្រី"), roadworthiness inspection schedules (ឆែកឆេរ), road tax vignette (មីញ៉ែត) renewal windows, and physical filing references, and implement a dedicated multi-tab reporting engine to generate the **Asset Ownership, Registration Card & Mignette Control Report**.
+
+---
+
+## Summary
+
+### Overview
+- **Report Name:** Asset Ownership, Registration Card & Vignette/Mignette Control Report (`1_Report Asset Ownership_ Registration Card & Mignette Control Report.xlsx`).
+- **Main Business Purpose:** To systematically monitor, control, and audit the physical custody of vehicle registration cards ("កាតគ្រី"), vehicle roadworthiness technical inspection cycles (ការឆែកឆេរលក្ខណៈបច្ចេកទេសយានយន្ត), annual road tax vignette (មីញ៉ែត) renewal windows, archive box/filing references, and legal ownership entities (*TLKH*, *Devco*, *Customer*). It provides an operational and risk management framework across active lease portfolios, repossessed vehicle yards, resold assets, and master vehicle registration logs across 5 specialized reporting sheets (**Summary**, **Current Customer List**, **Repo**, **Resold**, and **Car registration Name**).
+
+### Data Sources
+The report consolidates data across **8 source tables** in the Tonle Core Banking System (`tonle1` database):
+1. **`MKT_LOAN_CONTRACT`**: Primary active loan contract table supplying contract IDs, customer IDs, officer IDs, branch codes, loan terms, vehicle asset specifications (brand, model, series, chassis VIN, engine number, plate number, color, engine size, year model), delivery dates, and custom registration/custody fields.
+2. **`MKT_CUSTOMER`**: Customer master table supplying borrower identity details (full English customer name: `LastNameEn` + `FirstNameEn`, contact details).
+3. **`MKT_OFFICER`**: Loan and sales officer table supplying lending officer names (`LastName` + `FirstName`).
+4. **`MKT_COLLATERAL_DE`**: Collateral detail table providing document custody records (`ReceivedBy`, `WithdrawalBy`, `WithdrawalDate`), vehicle technical specs, registration plate, issuance date, maturity, and ownership name.
+5. **`MKT_LOAN_COLLATERAL`**: Collateral bridge table linking loan contracts (`MKT_LOAN_CONTRACT`) to their corresponding collateral records (`MKT_COLLATERAL_DE`).
+6. **`MKT_ASSET_DELIVERY`**: Leased asset delivery table providing physical delivery dates, asset classification (`V` for Vehicle, `E` for Equipment), asset description, and handover notes.
+7. **`MKT_FORECLOSED_PROPERTY`**: Foreclosed and repossessed property table supplying vehicle inventory yard locations, physical card locations, vignette handover status, inspection status, and archive file numbers for the *Repo* and *Resold* sheets.
+8. **`MKT_CLOSED_LOAN`**: Historical closed/paid-off loan contracts table used to maintain custody trails and historical vehicle ownership records in the *Car registration Name* sheet.
+
+### Schema Updates
+To support the operational data capture requirements of this report, **2 core tables** require schema extensions (along with their corresponding `_INAU` in-authorization and `_HIST` history audit twin tables, totaling 6 physical database tables):
+
+1. **`MKT_LOAN_CONTRACT`** (including `MKT_LOAN_CONTRACT_INAU` and `MKT_LOAN_CONTRACT_HIST`):
+   - `CodeFiling` (`VARCHAR(35)` / `db.String(35)`): Physical archive box / filing sequence number (e.g., `806`).
+   - `Seats` (`INTEGER` / `db.Integer`): Passenger seat capacity (e.g., `5`, `7`, `14`).
+   - `CollateralKeep` (`VARCHAR(50)` / `db.String(50)`): Physical document custody status / custodian location (*In TLF*, *In BSP*, *With PU*, *Paid off*, *Sold repossessed*, *Officer Custodian*, *Other*).
+   - `CollateralKeepRemark` (`TEXT` / `db.Text`): Explanatory custody notes when custody status is *Other* or remarks.
+   - `WithdrawDate` (`VARCHAR(10)` / `db.String(10)`): Date registration card was released or withdrawn (`YYYY-MM-DD`).
+   - `RegistrationOwnership` (`VARCHAR(50)` / `db.String(50)`): Ownership entity printed on the registration card (*TLKH*, *Devco*, *Customer*, *Other*).
+   - `RegIssueDate` (`VARCHAR(10)` / `db.String(10)`): Vehicle registration card issuance date (`YYYY-MM-DD`).
+   - `InspectionDate` (`VARCHAR(10)` / `db.String(10)`): Vehicle roadworthiness inspection date (កាលបរិច្ឆេទឆែកឆេរ, `YYYY-MM-DD`).
+   - `InspectionExpiryDate` (`VARCHAR(10)` / `db.String(10)`): Roadworthiness certificate expiry date (`YYYY-MM-DD`).
+   - `VignetteRenewStart` (`VARCHAR(10)` / `db.String(10)`): Road tax vignette renewal window opening date (`YYYY-MM-DD`).
+   - `VignetteRenewEnd` (`VARCHAR(10)` / `db.String(10)`): Road tax vignette renewal window deadline date (`YYYY-MM-DD`).
+
+2. **`MKT_FORECLOSED_PROPERTY`** (including `MKT_FORECLOSED_PROPERTY_INAU` and `MKT_FORECLOSED_PROPERTY_HIST`):
+   - `AssetLocation` (`VARCHAR(100)` / `db.String(100)`): Physical storage/yard location of repossessed asset (*At Devco*, *At yard*, *At customer*).
+   - `CardLocation` (`VARCHAR(100)` / `db.String(100)`): Physical registration card location (*Card Kry at Devco*, *Card Kry at Customer*).
+   - `VignetteStatus` (`VARCHAR(50)` / `db.String(50)`): Vignette / road tax paper handover status (e.g., `2010`, `2012`, `N/A`).
+   - `InspectionStatus` (`VARCHAR(50)` / `db.String(50)`): Roadworthiness inspection certificate status upon repossession/sale.
+   - `FileNumber` (`VARCHAR(35)` / `db.String(35)`): Archive file reference number for foreclosed property records.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Data Capture Scope Decision:**
+> In the proposed approach, the operational fields (Custody Location, Filing Code, Seats, Registration Card Ownership, Inspection Dates, and Vignette Renewal Dates) are placed on the **Loan Contract** (`MKT_LOAN_CONTRACT`) and **Foreclosed Property** (`MKT_FORECLOSED_PROPERTY`) modules within the `local/Tonle` customization layer.
+>
+> Please confirm if your team enters vehicle registration details at the **Loan Contract** stage, during **Asset Delivery**, or at the **Collateral Detail** stage.
+
+> [!NOTE]
+> **Multi-Sheet Template Matching:**
+> The Excel export will generate all 5 sheets (**Summary**, **Current Customer List**, **Repo**, **Resold**, and **Car registration Name**) with full formatting, column widths, date styling, and Excel formulas (`COUNTIF`, `SUM`, `DAY`, `MONTH`, `YEAR`) matching [1_Report Asset Ownership_ Registration Card & Mignette Control Report.xlsx](file:///home/admin/Project/CBS/Tonle/ReportExcel/1_Report%20Asset%20Ownership_%20Registration%20Card%20%26%20Mignette%20Control%20Report.xlsx).
+
+---
+
+## Proposed Changes
+
+```mermaid
+flowchart TD
+    subgraph Data Layer
+        A[MKT_LOAN_CONTRACT Schema Extension]
+        B[MKT_FORECLOSED_PROPERTY Schema Extension]
+        C[SQL Migration Script]
+    end
+
+    subgraph UI & Capture Layer
+        D[Loan Contract Form Extension: Tab 19]
+        E[Foreclosed Property Form Extension]
+    end
+
+    subgraph Reporting Layer
+        F[Asset Ownership Report Engine]
+        G[5-Sheet OpenPyXL Exporter]
+        H[URL Route Registration]
+    end
+
+    A --> D
+    B --> E
+    C --> A
+    C --> B
+    D --> F
+    E --> F
+    F --> G
+    F --> H
+```
+
+---
+
+### Database Schema & Models
+
+#### [MODIFY] [models.py](file:///home/admin/Project/CBS/Tonle/app/LoanContract/models.py)
+Extend `MKT_LOAN_CONTRACT`, `MKT_LOAN_CONTRACT_INAU`, and `MKT_LOAN_CONTRACT_HIST` with the following columns:
+- `CodeFiling` (`db.String(35)`): Physical archive / box filing number (e.g., `806`).
+- `Seats` (`db.Integer`): Passenger seat capacity (e.g., `5`, `7`, `14`).
+- `CollateralKeep` (`db.String(50)`): Physical document custody location or custodian (*In TLF*, *In BSP*, *With PU*, or Custodian/Officer name).
+- `CollateralKeepRemark` (`db.Text`): Explanatory note if custody status is *Other*.
+- `WithdrawDate` (`db.String(10)`): Date the registration card was released/withdrawn.
+- `RegistrationOwnership` (`db.String(50)`): Ownership entity printed on card (*TLKH*, *Devco*, *Customer*).
+- `RegIssueDate` (`db.String(10)`): Registration card issuance date.
+- `InspectionDate` (`db.String(10)`): Vehicle roadworthiness inspection date (កាលបរិច្ឆេទឆែកឆេរ).
+- `InspectionExpiryDate` (`db.String(10)`): Roadworthiness certificate expiry date.
+- `VignetteRenewStart` (`db.String(10)`): Road tax vignette renewal window start date.
+- `VignetteRenewEnd` (`db.String(10)`): Road tax vignette renewal window end date.
+
+#### [MODIFY] [models.py](file:///home/admin/Project/CBS/Tonle/app/ForeclosedProperty/models.py)
+Extend `MKT_FORECLOSED_PROPERTY`, `MKT_FORECLOSED_PROPERTY_INAU`, and `MKT_FORECLOSED_PROPERTY_HIST` with:
+- `AssetLocation` (`db.String(100)`): Physical yard/storage location of repossessed asset (*At Devco*, *At yard*, *At customer*).
+- `CardLocation` (`db.String(100)`): Physical registration card location (*Card Kry at Devco*, *Card Kry at Customer*).
+- `VignetteStatus` (`db.String(50)`): Vignette / tax paper handover status (e.g., `2010`, `2012`, `N/A`).
+- `InspectionStatus` (`db.String(50)`): Inspection document status upon repossession/sale.
+- `FileNumber` (`db.String(35)`): Archive file reference number.
+
+#### [NEW] [add_asset_ownership_and_custody_fields.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/migrations/add_asset_ownership_and_custody_fields.sql)
+PostgreSQL migration script to alter tables and add all new columns safely (`ADD COLUMN IF NOT EXISTS`).
+
+---
+
+### UI & Forms (Tonle Customizations)
+
+#### [MODIFY] [forms.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/LoanContract/forms.py)
+In `FRM_LOAN_CONTRACT_EX`:
+- Add a new tab `19-Document & Inspection Control` (or extend `01-Asset Info`):
+  - `CodeFiling` (`TextField`)
+  - `Seats` (`IntegerField`)
+  - `RegistrationOwnership` (`SelectField` / `TextField`: *TLKH*, *Devco*, *Customer*, *Other*)
+  - `CollateralKeep` (`SelectField`: *In TLF*, *In BSP*, *With PU*, *Paid off*, *Sold repossessed*, *Officer Custodian*, *Other*)
+  - `CollateralKeepRemark` (`TextAreaField`)
+  - `WithdrawDate` (`DateField`)
+  - `RegIssueDate` (`DateField`)
+  - `InspectionDate` (`DateField`)
+  - `InspectionExpiryDate` (`DateField`)
+  - `VignetteRenewStart` (`DateField`)
+  - `VignetteRenewEnd` (`DateField`)
+
+#### [MODIFY] [forms.py](file:///home/admin/Project/CBS/Tonle/app/ForeclosedProperty/forms.py)
+Add the repossession yard location, registration card location, and vignette/inspection fields to the foreclosed property entry/edit forms.
+
+---
+
+### Reporting Module & Multi-Tab Excel Generator
+
+#### [NEW] [assetownership.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/assetownership.py)
+Create the custom report module with:
+1. **Search Form (`FRM_ASSET_OWNERSHIP_SEARCH_EX`)**:
+   - `Branch` (Filter by branch)
+   - `OfficerID` (Filter by lending officer)
+   - `CollateralKeep` (Filter by custody status/location)
+   - `RegistrationOwnership` (Filter by ownership name)
+   - `InspectionDueOption` (Upcoming inspection / overdue)
+   - `DeliveryDateFrom` / `DeliveryDateTo`
+2. **Web Grid View (`/Morakot/Report/AssetOwnership`)**:
+   - Renders interactive portfolio listing with key columns.
+3. **Multi-Sheet OpenPyXL Exporter (`/Morakot/Report/AssetOwnership/Excel`)**:
+   - **Sheet 1 (`Summary`)**: Dynamic table calculating account counts per custody status using `=COUNTIF('Current Customer List'!M:M, ...)` and `=SUM(...)`.
+   - **Sheet 2 (`Current Customer List`)**: 26-column active portfolio list with exact headers, background colors, borders, and date formatting (`YYYY-MM-DD`).
+   - **Sheet 3 (`Repo`)**: Repossessed vehicle inventory with asset location and card custody status.
+   - **Sheet 4 (`Resold`)**: Sold repossessed asset register with buyer (*SOLD TO*), tax paper status, and inspection status.
+   - **Sheet 5 (`Car registration Name`)**: Master historical registration register with `=DAY(L...)`, `=MONTH(L...)`, `=YEAR(L...)` formulas and renewal windows.
+
+#### [MODIFY] [urlregister.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/urlregister.py)
+Register the new report routes:
+- `from .Report.assetownership import *`
+
+---
+
+## Verification Plan
+
+### Automated Tests
+1. **Model & Migration Integrity Test**:
+   - Verify all columns exist on `MKT_LOAN_CONTRACT`, `MKT_LOAN_CONTRACT_INAU`, `MKT_LOAN_CONTRACT_HIST`, `MKT_FORECLOSED_PROPERTY`.
+2. **Report Generation Test**:
+   - Create a test script in `scratch/test_asset_ownership_report.py` that queries active contracts, builds mock data, and verifies the generated `.xlsx` workbook using `openpyxl`.
+   - Verify sheet names: `['Summary', 'Current Customer List', 'Repo', 'Resold', 'Car registration Name']`.
+   - Verify all 26 columns on `Current Customer List` and formula evaluations on `Summary` and `Car registration Name`.
+
+### Manual Verification
+1. Open the Tonle Loan Contract screen (`/LoanContractEx`), fill in vehicle specs, filing code `806`, custody `In TLF`, registration ownership `TLKH`, inspection dates, and authorize the contract.
+2. Navigate to `/Morakot/Report/AssetOwnership`, apply search filters, and check on-screen results.
+3. Click **Export to Excel** and verify that the downloaded `.xlsx` opens cleanly in Excel/LibreOffice with all 5 sheets, styling, and working formulas matching the reference template.

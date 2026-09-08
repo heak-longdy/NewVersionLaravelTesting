@@ -1,2 +1,6 @@
 *
 !.gitignore
+!file-manager/
+!file-manager/*
+!customers/
+!customers/*

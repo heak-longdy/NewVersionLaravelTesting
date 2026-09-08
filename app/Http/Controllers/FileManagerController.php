@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileManagerController extends Controller
@@ -332,19 +333,31 @@ class FileManagerController extends Controller
     /**
      * Download file with original filename.
      */
-    public function download(int $id): StreamedResponse
+    public function download(int $id): SymfonyResponse
     {
         /** @var FileItem $fileItem */
         $fileItem = FileItem::withTrashed()->findOrFail($id);
 
-        if (! Storage::disk($fileItem->disk)->exists($fileItem->file_path)) {
-            abort(404, 'File not found on storage.');
+        if (Storage::disk($fileItem->disk)->exists($fileItem->file_path)) {
+            return Storage::disk($fileItem->disk)->download(
+                $fileItem->file_path,
+                $fileItem->original_name
+            );
         }
 
-        return Storage::disk($fileItem->disk)->download(
-            $fileItem->file_path,
-            $fileItem->original_name
-        );
+        // Check in public/storage
+        $publicPath = public_path('storage/'.$fileItem->file_path);
+        if (file_exists($publicPath) && ! is_dir($publicPath)) {
+            return response()->download($publicPath, $fileItem->original_name);
+        }
+
+        // Check in base repository storage (for deployed files on Vercel)
+        $repoPath = base_path('storage/app/public/'.$fileItem->file_path);
+        if (file_exists($repoPath) && ! is_dir($repoPath)) {
+            return response()->download($repoPath, $fileItem->original_name);
+        }
+
+        abort(404, 'File not found on storage.');
     }
 
     /**

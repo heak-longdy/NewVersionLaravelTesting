@@ -1,0 +1,426 @@
+# Implementation Plan: Group-Based Dual Claim Workflow for CPO/SCM and CAO/CDM
+
+## 1. Goal & Problem Statement
+
+In the Tonle Loan Application Workflow, Step 14.1 (`LA_AMLCLM`) currently operates on a dual-claim model (`NumOfAuthorize = 2`) hardcoded strictly to individual role IDs `CPO` (Central Processing Officer) and `CAO` (Credit Assessment Officer).
+
+This implementation updates the workflow logic to expand eligibility to include each role's manager:
+- **Group 1 (Processing / Lending Operations Pool)**: Managed by `SCM` (claimable by either a `CPO` or an `SCM`).
+- **Group 2 (Assessment / Credit Risk Pool)**: Managed by `CDM` (claimable by either a `CAO` or a `CDM`).
+
+### Claiming Invariants
+1. **Group Mutual Exclusion**:
+   - **CPO / SCM Group**: If either a `CPO` or an `SCM` claims and performs the activity, no other user from this group (neither another `CPO` nor an `SCM`) may claim it.
+   - **CAO / CDM Group**: If either a `CAO` or a `CDM` claims and performs the activity, no other user from this group (neither another `CAO` nor a `CDM`) may claim it.
+2. **Total Quorum**:
+   - The task must be completed once from the CPO/SCM pair and once from the CAO/CDM pair, maintaining exactly **two distinct claims in total**.
+3. **Downstream Routing Decoupling**:
+   - Step 19 (`LA_AML`) routes exclusively to the claimant recorded in `AMLClaimedLOUser` (whether `CPO` or `SCM`).
+   - Step 21 (`LA_CREDIT`) routes exclusively to the claimant recorded in `AMLClaimedCAOUser` (whether `CAO` or `CDM`).
+4. **Dynamic Maintainability (Zero-Code Future Changes)**:
+   - Configurable via parameter syntax (`"CPO,SCM | CAO,CDM"`) and backed by `MKT_APP_SETTING` (`TONLE_LA_DUAL_CLAIM_GROUPS`). Adding future roles (e.g. `HOD`, `OPS_MGR`) or renaming roles can be done directly from the CBS UI / SQL without modifying Python code.
+
+```mermaid
+flowchart TD
+    S14["Step 14: Submit to AML\n(A_SAML)"] --> S14_1["Step 14.1: Assign case to me\nStage: LA_AMLCLM | NumOfAuthorize: 2"]
+    
+    subgraph POOL1["Group 1: Processing Pool (CPO / SCM)"]
+        CLAIM_G1["Claim 1: CPO or SCM claims\n- Persists AMLClaimedLOUser\n- Disqualifies all other CPOs & SCMs"]
+    end
+    
+    subgraph POOL2["Group 2: Assessment Pool (CAO / CDM)"]
+        CLAIM_G2["Claim 2: CAO or CDM claims\n- Persists AMLClaimedCAOUser\n- Disqualifies all other CAOs & CDMs"]
+    end
+
+    S14_1 --> POOL1
+    S14_1 --> POOL2
+
+    CLAIM_G1 --> GATE{"Both Groups\nClaimed?\n(Count = 2)"}
+    CLAIM_G2 --> GATE
+
+    GATE -- "Count = 1" --> WAIT["Workflow remains at LA_AMLCLM\n(Unclaimed group stays visible)"]
+    GATE -- "Count = 2" --> S19["Step 19: AML Review (Stage: LA_AML)\nResolved to AMLClaimedLOUser (CPO or SCM)"]
+    S19 --> S21["Step 21: Credit Review (Stage: LA_CREDIT)\nResolved to AMLClaimedCAOUser (CAO or CDM)"]
+```
+
+---
+
+## 2. User Review Required
+
+> [!IMPORTANT]
+> **Role Codes**: Please confirm that `SCM` and `CDM` are the exact Role IDs configured in `MKT_USER.Role` and `MKT_ROLE.ID` in your database. If different role codes are used (e.g., `SCM_HO` or `CR_MGR`), they can be adjusted in the SQL configuration script below.
+
+> [!NOTE]
+> **Delimited Syntax Standard**: The workflow configuration parameter will use `"CPO,SCM | CAO,CDM"`. Pipe `|` separates groups; commas or spaces separate roles within each group. The legacy format `"CPO CAO"` remains fully supported for backward compatibility.
+
+---
+
+## 3. Proposed Changes & Implementation in Code
+
+### Component 1: Workflow Extension Module
+#### [MODIFY] [local/Tonle/tools/mktworkflow.py](file:///home/admin/Project/CBS/Tonle_01/local/Tonle/tools/mktworkflow.py)
+
+Replace lines 699 to 855 in `local/Tonle/tools/mktworkflow.py` with the following implementation:
+
+```python
+# ---------------------------------------------------------------------------
+# Dual Claim Configuration & Hooks for Step 14.1 (Stage LA_AMLCLM)
+# Supports Group 1 (CPO / SCM) and Group 2 (CAO / CDM) with dynamic parsing.
+# ---------------------------------------------------------------------------
+
+DUAL_CLAIM_GROUPS_SETTING = 'TONLE_LA_DUAL_CLAIM_GROUPS'
+DUAL_CLAIM_DEFAULT_GROUPS = (('CPO', 'SCM'), ('CAO', 'CDM'))
+
+
+def parseDualClaimRoles(Param=None):
+    """
+    Parses Group 1 (Processing/Lending) and Group 2 (Credit Assessment) roles.
+    
+    Supported formats on Activity Type / Transaction Param:
+      1. Pipe delimited:  "CPO,SCM | CAO,CDM" or "CPO SCM | CAO CDM"
+      2. Space delimited: "CPO,SCM CAO,CDM"
+      3. Legacy 2-token:  "CPO CAO"
+      4. AppSetting:      TONLE_LA_DUAL_CLAIM_GROUPS in MKT_APP_SETTING
+      5. Fallback:        (('CPO', 'SCM'), ('CAO', 'CDM'))
+    
+    Returns:
+      tuple: (tuple(Group1Roles), tuple(Group2Roles))
+    """
+    ParamStr = str(Param).strip() if Param else ''
+    if not ParamStr:
+        SettingVal = mktsetting.getAppSetting(DUAL_CLAIM_GROUPS_SETTING)
+        ParamStr = str(SettingVal).strip() if SettingVal else ''
+
+    if not ParamStr:
+        return DUAL_CLAIM_DEFAULT_GROUPS
+
+    if '|' in ParamStr:
+        Parts = ParamStr.split('|', 1)
+        G1 = tuple(r.strip() for r in Parts[0].replace(',', ' ').split() if r.strip())
+        G2 = tuple(r.strip() for r in Parts[1].replace(',', ' ').split() if r.strip())
+        return G1, G2
+
+    Tokens = ParamStr.split()
+    if len(Tokens) == 2 and ',' in ParamStr:
+        G1 = tuple(r.strip() for r in Tokens[0].split(',') if r.strip())
+        G2 = tuple(r.strip() for r in Tokens[1].split(',') if r.strip())
+        return G1, G2
+
+    if len(Tokens) == 2:
+        # Legacy 2-token format ("CPO CAO")
+        return (Tokens[0],), (Tokens[1],)
+
+    return DUAL_CLAIM_DEFAULT_GROUPS
+
+
+def getDualClaimAssignees(**kwargs):
+    """
+    Assignee resolver for the Dual Claim Stage (LA_AMLCLM):
+    Returns all branch-eligible users across both Group 1 (CPO/SCM) and Group 2 (CAO/CDM).
+    Flattens roles from both pools and delegates to getUsersRoleBranch.
+    """
+    G1Roles, G2Roles = parseDualClaimRoles(kwargs.get('Param'))
+    AllRoles = list(dict.fromkeys(G1Roles + G2Roles))
+    kwargs['Param'] = ' '.join(AllRoles)
+    return getUsersRoleBranch(**kwargs)
+
+
+def validateDualClaimBeforeAct(Data=None, Param=None, **outer_kwargs):
+    """
+    BeforeAct hook for A_CLAIMAML ('Assign case to me').
+    Guarantees exactly 1 claim from Group 1 (CPO / SCM) and 1 claim from Group 2 (CAO / CDM).
+    Blocks duplicate claims from the same group.
+    Returns a callable to support Workflow V2's two-step BeforeAct execution.
+    """
+    def _execute(Data=None, Param=None, **kwargs):
+        EffectiveParam = Param or kwargs.get('Param') or outer_kwargs.get('Param')
+        RoleProcessingGroup, RoleAssessmentGroup = parseDualClaimRoles(EffectiveParam)
+
+        CurrentUserID = session.get('getLogInID', '')
+        UserObj = MKT_USER.query.filter_by(ID=CurrentUserID).first()
+        if not UserObj:
+            raise Exception(_l('User not found.'))
+        UserRole = UserObj.Role
+
+        WorkflowID = kwargs.get('WorkflowID') or outer_kwargs.get('WorkflowID')
+        Workflow, LoanModel = _getWorkflowLoanSide(WorkflowID)
+        if not Workflow or not Workflow.RecordID:
+            return True
+        LoanObj = LoanModel.query.get(Workflow.RecordID)
+        if not LoanObj:
+            return True
+
+        InGroup1 = UserRole in RoleProcessingGroup
+        InGroup2 = UserRole in RoleAssessmentGroup
+
+        if not InGroup1 and not InGroup2:
+            AllAllowed = ", ".join(RoleProcessingGroup + RoleAssessmentGroup)
+            raise Exception(_l('Only users with eligible roles (%s) can claim this case.') % AllAllowed)
+
+        # Evaluate Group 1 (Processing: CPO / SCM)
+        if InGroup1:
+            HasClaimedG1 = bool(LoanObj.AMLClaimedLOUser and LoanObj.AMLClaimedLOUser != "'")
+            if HasClaimedG1 and not InGroup2:
+                raise Exception(_l(
+                    'This case has already been claimed by the Processing group (%s). '
+                    'Awaiting claim from the Credit Assessment group (%s).'
+                ) % (LoanObj.AMLClaimedLOUser, '/'.join(RoleAssessmentGroup)))
+            if not HasClaimedG1:
+                return True
+
+        # Evaluate Group 2 (Credit Assessment: CAO / CDM)
+        if InGroup2:
+            HasClaimedG2 = bool(LoanObj.AMLClaimedCAOUser and LoanObj.AMLClaimedCAOUser != "'")
+            if HasClaimedG2:
+                raise Exception(_l(
+                    'This case has already been claimed by the Credit Assessment group (%s). '
+                    'Awaiting claim from the Processing group (%s).'
+                ) % (LoanObj.AMLClaimedCAOUser, '/'.join(RoleProcessingGroup)))
+            return True
+
+        return True
+
+    if 'WorkflowID' in outer_kwargs:
+        return _execute(Data=Data, Param=Param, **outer_kwargs)
+    return _execute
+
+
+def claimAMLDualCase(Data=None, Param=None, **kwargs):
+    """
+    AfterAct hook for A_CLAIMAML ('Assign case to me').
+    Persists the claimant's User ID into AMLClaimedLOUser or AMLClaimedCAOUser,
+    removes all same-group peers (both officer and manager roles) from
+    MKT_WORKFLOW_USER_ACTIVITY and updates NextAssignee so other users sharing
+    the same group no longer see the record.
+    """
+    WorkflowID = kwargs.get('WorkflowID')
+    if not WorkflowID:
+        return
+    Workflow, LoanModel = _getWorkflowLoanSide(WorkflowID)
+    if Workflow is None or not Workflow.RecordID:
+        return
+    Obj = LoanModel.query.get(Workflow.RecordID)
+    if Obj is None:
+        return
+    ClaimedBy = session.get('getLogInID', '')
+    if not ClaimedBy:
+        return
+    UserObj = MKT_USER.query.filter_by(ID=ClaimedBy).first()
+    if not UserObj:
+        return
+
+    RoleProcessingGroup, RoleAssessmentGroup = parseDualClaimRoles(Param or kwargs.get('Param'))
+
+    try:
+        SameGroupUsersToRemove = []
+
+        # Claim Group 1 (CPO / SCM)
+        if UserObj.Role in RoleProcessingGroup and (not Obj.AMLClaimedLOUser or Obj.AMLClaimedLOUser == "'"):
+            Obj.AMLClaimedLOUser = ClaimedBy
+            OtherGroupUsers = MKT_USER.query.filter(
+                MKT_USER.Role.in_(RoleProcessingGroup),
+                MKT_USER.ID != ClaimedBy
+            ).all()
+            SameGroupUsersToRemove = [u.ID for u in OtherGroupUsers]
+
+        # Claim Group 2 (CAO / CDM)
+        elif UserObj.Role in RoleAssessmentGroup and (not Obj.AMLClaimedCAOUser or Obj.AMLClaimedCAOUser == "'"):
+            Obj.AMLClaimedCAOUser = ClaimedBy
+            OtherGroupUsers = MKT_USER.query.filter(
+                MKT_USER.Role.in_(RoleAssessmentGroup),
+                MKT_USER.ID != ClaimedBy
+            ).all()
+            SameGroupUsersToRemove = [u.ID for u in OtherGroupUsers]
+
+        db.session.add(Obj)
+
+        # 1. Remove all same-group peers from active MKT_WORKFLOW_USER_ACTIVITY
+        if SameGroupUsersToRemove:
+            (db.session.query(MKT_WORKFLOW_USER_ACTIVITY)
+             .filter(
+                 MKT_WORKFLOW_USER_ACTIVITY.ID == WorkflowID,
+                 MKT_WORKFLOW_USER_ACTIVITY.Stage == Workflow.Stage,
+                 MKT_WORKFLOW_USER_ACTIVITY.UserID.in_(SameGroupUsersToRemove)
+             )
+             .delete(synchronize_session='fetch'))
+
+        # 2. Update NextAssignee on Workflow main row
+        if Workflow.NextAssignee:
+            CurrentAssignees = Workflow.NextAssignee.split()
+            FilteredAssignees = [u for u in CurrentAssignees if u not in SameGroupUsersToRemove]
+            if ClaimedBy not in FilteredAssignees:
+                FilteredAssignees.append(ClaimedBy)
+            Workflow.NextAssignee = " ".join(FilteredAssignees)
+            db.session.add(Workflow)
+
+        db.session.commit()
+    except Exception as Err:
+        db.session.rollback()
+        print('[Tonle claimAMLDualCase] commit failed for WorkflowID=%s: %s' % (WorkflowID, Err))
+
+
+def getAMLClaimedLOUser(**kwargs):
+    """
+    Assignee resolver for Step 19 (Stage LA_AML):
+    Routes exclusively to the Central Processing Officer / SCM who claimed the case (AMLClaimedLOUser).
+    """
+    Data = kwargs.get('Data', {})
+    ID = Data.get('ID', '')
+    Status = Data.get('Status', '')
+
+    LoanAppObj = MKT_LOAN_APPLICATION_INAU.query.get(ID) if Status == 'INAU' else MKT_LOAN_APPLICATION.query.get(ID)
+    ClaimedUser = LoanAppObj.AMLClaimedLOUser if LoanAppObj is not None else None
+    if ClaimedUser and ClaimedUser != "'":
+        return ClaimedUser
+
+    return session.get('getLogInID', '') or ''
+
+
+def getAMLClaimedCAOUser(**kwargs):
+    """
+    Assignee resolver for Step 21 (Stage LA_CREDIT - Credit Assessment Review):
+    Routes exclusively to the Credit Assessment Officer / CDM who claimed the case (AMLClaimedCAOUser).
+    """
+    Data = kwargs.get('Data', {})
+    ID = Data.get('ID', '')
+    Status = Data.get('Status', '')
+
+    LoanAppObj = MKT_LOAN_APPLICATION_INAU.query.get(ID) if Status == 'INAU' else MKT_LOAN_APPLICATION.query.get(ID)
+    ClaimedUser = LoanAppObj.AMLClaimedCAOUser if LoanAppObj is not None else None
+    if ClaimedUser and ClaimedUser != "'":
+        return ClaimedUser
+
+    return session.get('getLogInID', '') or ''
+```
+
+---
+
+### Component 2: Database Migration & Configuration Script
+#### [NEW] [scripts/update_dual_claim_scm_cdm.sql](file:///home/admin/Project/CBS/Tonle_01/scripts/update_dual_claim_scm_cdm.sql)
+
+```sql
+-- =========================================================================
+-- DATABASE MIGRATION: Group-Based Dual Claim Configuration (CPO/SCM | CAO/CDM)
+-- =========================================================================
+
+BEGIN;
+
+-- 1. Insert/Update centralized application setting for zero-downtime maintenance
+INSERT INTO "MKT_APP_SETTING" ("ID", "Value", "Description", "Status", "Branch", "Curr")
+VALUES (
+    'TONLE_LA_DUAL_CLAIM_GROUPS',
+    'CPO,SCM | CAO,CDM',
+    'Tonle LA Dual Claim Role Pools (Group 1: Processing | Group 2: Credit Assessment)',
+    'AUTH',
+    'HO',
+    '0'
+)
+ON CONFLICT ("ID") DO UPDATE 
+SET "Value" = 'CPO,SCM | CAO,CDM';
+
+-- 2. Update A_CLAIMAML Activity Type Param
+UPDATE "MKT_WORKFLOW_ACT_TYPE"
+SET "Param" = 'CPO,SCM | CAO,CDM'
+WHERE "ID" = 'A_CLAIMAML';
+
+-- 3. Update Dual Claim Transaction rules across all 21 condition tiers (T_01_DCL to T_21_DCL)
+UPDATE "MKT_WORKFLOW_TRANSACTION"
+SET "Param" = 'CPO,SCM | CAO,CDM'
+WHERE "ID" LIKE 'T_%_DCL';
+
+COMMIT;
+```
+
+---
+
+### Component 3: Automated Unit Testing Suite
+#### [NEW] [tests/unit/tools/test_mktworkflow_dual_claim.py](file:///home/admin/Project/CBS/Tonle_01/tests/unit/tools/test_mktworkflow_dual_claim.py)
+
+```python
+# -*- coding: utf-8 -*-
+"""
+Unit tests for Tonle Loan Application Workflow Group-Based Dual Claim logic.
+Verifies role parsing, validation hooks, peer disqualification, and fallback mechanisms.
+"""
+
+from __future__ import absolute_import
+import unittest
+from local.Tonle.tools.mktworkflow import (
+    parseDualClaimRoles,
+    DUAL_CLAIM_DEFAULT_GROUPS,
+    DUAL_CLAIM_GROUPS_SETTING,
+)
+
+
+class TestDualClaimLogic(unittest.TestCase):
+
+    def test_parse_pipe_delimited(self):
+        """Test parsing pipe-delimited format with comma/spaces."""
+        g1, g2 = parseDualClaimRoles('CPO,SCM | CAO,CDM')
+        self.assertEqual(g1, ('CPO', 'SCM'))
+        self.assertEqual(g2, ('CAO', 'CDM'))
+
+        # With extra spaces
+        g1, g2 = parseDualClaimRoles(' CPO , SCM  |  CAO , CDM ')
+        self.assertEqual(g1, ('CPO', 'SCM'))
+        self.assertEqual(g2, ('CAO', 'CDM'))
+
+    def test_parse_space_and_comma_delimited(self):
+        """Test parsing space-separated groups with comma-separated roles."""
+        g1, g2 = parseDualClaimRoles('CPO,SCM CAO,CDM')
+        self.assertEqual(g1, ('CPO', 'SCM'))
+        self.assertEqual(g2, ('CAO', 'CDM'))
+
+    def test_parse_legacy_two_token(self):
+        """Test backward compatibility with legacy 2-token format."""
+        g1, g2 = parseDualClaimRoles('CPO CAO')
+        self.assertEqual(g1, ('CPO',))
+        self.assertEqual(g2, ('CAO',))
+
+    def test_parse_empty_param_fallback(self):
+        """Test fallback to default groups when Param is None or empty."""
+        g1, g2 = parseDualClaimRoles(None)
+        self.assertEqual(g1, ('CPO', 'SCM'))
+        self.assertEqual(g2, ('CAO', 'CDM'))
+
+        g1, g2 = parseDualClaimRoles('')
+        self.assertEqual(g1, ('CPO', 'SCM'))
+        self.assertEqual(g2, ('CAO', 'CDM'))
+
+    def test_parse_multi_role_expansion(self):
+        """Test dynamic expansion with 3 roles per group."""
+        g1, g2 = parseDualClaimRoles('CPO,SCM,HOD | CAO,CDM,CR_MGR')
+        self.assertEqual(g1, ('CPO', 'SCM', 'HOD'))
+        self.assertEqual(g2, ('CAO', 'CDM', 'CR_MGR'))
+
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+---
+
+### Component 4: Documentation Update
+#### [MODIFY] [implementation_plan_workflow_tonle.md](file:///home/admin/Project/CBS/Tonle_01/implementation_plan_workflow_tonle.md)
+Update the documentation to document the manager-inclusive pools, Mermaid diagrams, SQL migration statements, and test data cases.
+
+---
+
+## 4. Verification Plan
+
+### Automated Testing
+Run the unit test suite:
+```bash
+python -m unittest tests/unit/tools/test_mktworkflow_dual_claim.py
+```
+
+### Manual Test Matrix
+| Step | Actor | Action | Expected Result |
+| :--- | :--- | :--- | :--- |
+| **1. Step 14: Submit to AML** | `CPO_1` | Click `Submit to AML` (`A_SAML`) | Workflow enters `LA_AMLCLM`. "Assign case to me" visible to `CPO_1`, `SCM_1`, `CAO_1`, and `CDM_1`. |
+| **2. Group 1 Claim (Manager)** | `SCM_1` | Click `Assign case to me` | `AMLClaimedLOUser = 'SCM_1'`. Button disappears for `SCM_1`, `SCM_2`, `CPO_1`, `CPO_2`. Workflow remains at `LA_AMLCLM` (Count = 1). |
+| **3. Negative Check: Group 1 Re-claim** | `CPO_1` | Click `Assign case to me` | **Blocked**: Alert shows *"Case already claimed by Processing group (SCM_1). Awaiting Credit Assessment group (CAO/CDM)"*. |
+| **4. Group 2 Claim (Officer)** | `CAO_1` | Click `Assign case to me` | `AMLClaimedCAOUser = 'CAO_1'`. Button disappears for `CAO_2`, `CDM_1`. Count reaches 2. |
+| **5. Gate Release** | System | Automatic advancement | Stage moves to Step 19 (`LA_AML`). |
+| **6. Step 19 AML Check** | `SCM_1` | Open `LA_AML` | AML check action buttons (`Clean`, `HRC`, `PEP`) visible **exclusively to SCM_1**. |
+| **7. Step 21 Credit Review** | `CAO_1` | Open `LA_CREDIT` | Credit Review action buttons visible **exclusively to CAO_1**. |

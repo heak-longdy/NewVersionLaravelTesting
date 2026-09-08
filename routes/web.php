@@ -3,8 +3,31 @@
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FileManagerController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::inertia('/', 'Welcome')->name('home');
+
+// Storage Fallback Route (serves storage assets if requests reach PHP/Vercel serverless)
+Route::get('storage/{path}', function (string $path) {
+    // 1. Check in public/storage
+    $publicPath = public_path('storage/'.$path);
+    if (file_exists($publicPath) && ! is_dir($publicPath)) {
+        return response()->file($publicPath);
+    }
+
+    // 2. Check in base repository storage (deployed in Vercel /var/task)
+    $repoPath = base_path('storage/app/public/'.$path);
+    if (file_exists($repoPath) && ! is_dir($repoPath)) {
+        return response()->file($repoPath);
+    }
+
+    // 3. Check public disk
+    if (Storage::disk('public')->exists($path)) {
+        return Storage::disk('public')->response($path);
+    }
+
+    abort(404);
+})->where('path', '.*')->name('storage.local');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');

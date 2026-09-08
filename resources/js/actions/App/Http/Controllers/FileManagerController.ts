@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\FileManagerController::index
-* @see app/Http/Controllers/FileManagerController.php:23
+* @see app/Http/Controllers/FileManagerController.php:24
 * @route '/file-manager'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::index
-* @see app/Http/Controllers/FileManagerController.php:23
+* @see app/Http/Controllers/FileManagerController.php:24
 * @route '/file-manager'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::index
-* @see app/Http/Controllers/FileManagerController.php:23
+* @see app/Http/Controllers/FileManagerController.php:24
 * @route '/file-manager'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\FileManagerController::index
-* @see app/Http/Controllers/FileManagerController.php:23
+* @see app/Http/Controllers/FileManagerController.php:24
 * @route '/file-manager'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\FileManagerController::index
-* @see app/Http/Controllers/FileManagerController.php:23
+* @see app/Http/Controllers/FileManagerController.php:24
 * @route '/file-manager'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\FileManagerController::index
-* @see app/Http/Controllers/FileManagerController.php:23
+* @see app/Http/Controllers/FileManagerController.php:24
 * @route '/file-manager'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\FileManagerController::index
-* @see app/Http/Controllers/FileManagerController.php:23
+* @see app/Http/Controllers/FileManagerController.php:24
 * @route '/file-manager'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\FileManagerController::api
-* @see app/Http/Controllers/FileManagerController.php:81
+* @see app/Http/Controllers/FileManagerController.php:82
 * @route '/file-manager/api/files'
 */
 export const api = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ api.definition = {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::api
-* @see app/Http/Controllers/FileManagerController.php:81
+* @see app/Http/Controllers/FileManagerController.php:82
 * @route '/file-manager/api/files'
 */
 api.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ api.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::api
-* @see app/Http/Controllers/FileManagerController.php:81
+* @see app/Http/Controllers/FileManagerController.php:82
 * @route '/file-manager/api/files'
 */
 api.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ api.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\FileManagerController::api
-* @see app/Http/Controllers/FileManagerController.php:81
+* @see app/Http/Controllers/FileManagerController.php:82
 * @route '/file-manager/api/files'
 */
 api.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ api.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\FileManagerController::api
-* @see app/Http/Controllers/FileManagerController.php:81
+* @see app/Http/Controllers/FileManagerController.php:82
 * @route '/file-manager/api/files'
 */
 const apiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const apiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\FileManagerController::api
-* @see app/Http/Controllers/FileManagerController.php:81
+* @see app/Http/Controllers/FileManagerController.php:82
 * @route '/file-manager/api/files'
 */
 apiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ apiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\FileManagerController::api
-* @see app/Http/Controllers/FileManagerController.php:81
+* @see app/Http/Controllers/FileManagerController.php:82
 * @route '/file-manager/api/files'
 */
 apiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -163,7 +163,7 @@ api.form = apiForm
 
 /**
 * @see \App\Http\Controllers\FileManagerController::store
-* @see app/Http/Controllers/FileManagerController.php:99
+* @see app/Http/Controllers/FileManagerController.php:100
 * @route '/file-manager'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -178,7 +178,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::store
-* @see app/Http/Controllers/FileManagerController.php:99
+* @see app/Http/Controllers/FileManagerController.php:100
 * @route '/file-manager'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -187,7 +187,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::store
-* @see app/Http/Controllers/FileManagerController.php:99
+* @see app/Http/Controllers/FileManagerController.php:100
 * @route '/file-manager'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -197,7 +197,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\FileManagerController::store
-* @see app/Http/Controllers/FileManagerController.php:99
+* @see app/Http/Controllers/FileManagerController.php:100
 * @route '/file-manager'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -207,7 +207,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\FileManagerController::store
-* @see app/Http/Controllers/FileManagerController.php:99
+* @see app/Http/Controllers/FileManagerController.php:100
 * @route '/file-manager'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -219,7 +219,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\FileManagerController::download
-* @see app/Http/Controllers/FileManagerController.php:335
+* @see app/Http/Controllers/FileManagerController.php:336
 * @route '/file-manager/{id}/download'
 */
 export const download = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -234,7 +234,7 @@ download.definition = {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::download
-* @see app/Http/Controllers/FileManagerController.php:335
+* @see app/Http/Controllers/FileManagerController.php:336
 * @route '/file-manager/{id}/download'
 */
 download.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -261,7 +261,7 @@ download.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\FileManagerController::download
-* @see app/Http/Controllers/FileManagerController.php:335
+* @see app/Http/Controllers/FileManagerController.php:336
 * @route '/file-manager/{id}/download'
 */
 download.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -271,7 +271,7 @@ download.get = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\FileManagerController::download
-* @see app/Http/Controllers/FileManagerController.php:335
+* @see app/Http/Controllers/FileManagerController.php:336
 * @route '/file-manager/{id}/download'
 */
 download.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -281,7 +281,7 @@ download.head = (args: { id: string | number } | [id: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\FileManagerController::download
-* @see app/Http/Controllers/FileManagerController.php:335
+* @see app/Http/Controllers/FileManagerController.php:336
 * @route '/file-manager/{id}/download'
 */
 const downloadForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -291,7 +291,7 @@ const downloadForm = (args: { id: string | number } | [id: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\FileManagerController::download
-* @see app/Http/Controllers/FileManagerController.php:335
+* @see app/Http/Controllers/FileManagerController.php:336
 * @route '/file-manager/{id}/download'
 */
 downloadForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -301,7 +301,7 @@ downloadForm.get = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\FileManagerController::download
-* @see app/Http/Controllers/FileManagerController.php:335
+* @see app/Http/Controllers/FileManagerController.php:336
 * @route '/file-manager/{id}/download'
 */
 downloadForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -318,7 +318,7 @@ download.form = downloadForm
 
 /**
 * @see \App\Http\Controllers\FileManagerController::update
-* @see app/Http/Controllers/FileManagerController.php:222
+* @see app/Http/Controllers/FileManagerController.php:223
 * @route '/file-manager/{fileItem}'
 */
 export const update = (args: { fileItem: number | { id: number } } | [fileItem: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -333,7 +333,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::update
-* @see app/Http/Controllers/FileManagerController.php:222
+* @see app/Http/Controllers/FileManagerController.php:223
 * @route '/file-manager/{fileItem}'
 */
 update.url = (args: { fileItem: number | { id: number } } | [fileItem: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -366,7 +366,7 @@ update.url = (args: { fileItem: number | { id: number } } | [fileItem: number | 
 
 /**
 * @see \App\Http\Controllers\FileManagerController::update
-* @see app/Http/Controllers/FileManagerController.php:222
+* @see app/Http/Controllers/FileManagerController.php:223
 * @route '/file-manager/{fileItem}'
 */
 update.put = (args: { fileItem: number | { id: number } } | [fileItem: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -376,7 +376,7 @@ update.put = (args: { fileItem: number | { id: number } } | [fileItem: number | 
 
 /**
 * @see \App\Http\Controllers\FileManagerController::update
-* @see app/Http/Controllers/FileManagerController.php:222
+* @see app/Http/Controllers/FileManagerController.php:223
 * @route '/file-manager/{fileItem}'
 */
 const updateForm = (args: { fileItem: number | { id: number } } | [fileItem: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -391,7 +391,7 @@ const updateForm = (args: { fileItem: number | { id: number } } | [fileItem: num
 
 /**
 * @see \App\Http\Controllers\FileManagerController::update
-* @see app/Http/Controllers/FileManagerController.php:222
+* @see app/Http/Controllers/FileManagerController.php:223
 * @route '/file-manager/{fileItem}'
 */
 updateForm.put = (args: { fileItem: number | { id: number } } | [fileItem: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -408,7 +408,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\FileManagerController::destroy
-* @see app/Http/Controllers/FileManagerController.php:258
+* @see app/Http/Controllers/FileManagerController.php:259
 * @route '/file-manager/{fileItem}'
 */
 export const destroy = (args: { fileItem: number | { id: number } } | [fileItem: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -423,7 +423,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::destroy
-* @see app/Http/Controllers/FileManagerController.php:258
+* @see app/Http/Controllers/FileManagerController.php:259
 * @route '/file-manager/{fileItem}'
 */
 destroy.url = (args: { fileItem: number | { id: number } } | [fileItem: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -456,7 +456,7 @@ destroy.url = (args: { fileItem: number | { id: number } } | [fileItem: number |
 
 /**
 * @see \App\Http\Controllers\FileManagerController::destroy
-* @see app/Http/Controllers/FileManagerController.php:258
+* @see app/Http/Controllers/FileManagerController.php:259
 * @route '/file-manager/{fileItem}'
 */
 destroy.delete = (args: { fileItem: number | { id: number } } | [fileItem: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -466,7 +466,7 @@ destroy.delete = (args: { fileItem: number | { id: number } } | [fileItem: numbe
 
 /**
 * @see \App\Http\Controllers\FileManagerController::destroy
-* @see app/Http/Controllers/FileManagerController.php:258
+* @see app/Http/Controllers/FileManagerController.php:259
 * @route '/file-manager/{fileItem}'
 */
 const destroyForm = (args: { fileItem: number | { id: number } } | [fileItem: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -481,7 +481,7 @@ const destroyForm = (args: { fileItem: number | { id: number } } | [fileItem: nu
 
 /**
 * @see \App\Http\Controllers\FileManagerController::destroy
-* @see app/Http/Controllers/FileManagerController.php:258
+* @see app/Http/Controllers/FileManagerController.php:259
 * @route '/file-manager/{fileItem}'
 */
 destroyForm.delete = (args: { fileItem: number | { id: number } } | [fileItem: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -498,7 +498,7 @@ destroy.form = destroyForm
 
 /**
 * @see \App\Http\Controllers\FileManagerController::restore
-* @see app/Http/Controllers/FileManagerController.php:273
+* @see app/Http/Controllers/FileManagerController.php:274
 * @route '/file-manager/{id}/restore'
 */
 export const restore = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -513,7 +513,7 @@ restore.definition = {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::restore
-* @see app/Http/Controllers/FileManagerController.php:273
+* @see app/Http/Controllers/FileManagerController.php:274
 * @route '/file-manager/{id}/restore'
 */
 restore.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -540,7 +540,7 @@ restore.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\FileManagerController::restore
-* @see app/Http/Controllers/FileManagerController.php:273
+* @see app/Http/Controllers/FileManagerController.php:274
 * @route '/file-manager/{id}/restore'
 */
 restore.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -550,7 +550,7 @@ restore.post = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\FileManagerController::restore
-* @see app/Http/Controllers/FileManagerController.php:273
+* @see app/Http/Controllers/FileManagerController.php:274
 * @route '/file-manager/{id}/restore'
 */
 const restoreForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -560,7 +560,7 @@ const restoreForm = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\FileManagerController::restore
-* @see app/Http/Controllers/FileManagerController.php:273
+* @see app/Http/Controllers/FileManagerController.php:274
 * @route '/file-manager/{id}/restore'
 */
 restoreForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -572,7 +572,7 @@ restore.form = restoreForm
 
 /**
 * @see \App\Http\Controllers\FileManagerController::forceDelete
-* @see app/Http/Controllers/FileManagerController.php:290
+* @see app/Http/Controllers/FileManagerController.php:291
 * @route '/file-manager/{id}/force-delete'
 */
 export const forceDelete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -587,7 +587,7 @@ forceDelete.definition = {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::forceDelete
-* @see app/Http/Controllers/FileManagerController.php:290
+* @see app/Http/Controllers/FileManagerController.php:291
 * @route '/file-manager/{id}/force-delete'
 */
 forceDelete.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -614,7 +614,7 @@ forceDelete.url = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\FileManagerController::forceDelete
-* @see app/Http/Controllers/FileManagerController.php:290
+* @see app/Http/Controllers/FileManagerController.php:291
 * @route '/file-manager/{id}/force-delete'
 */
 forceDelete.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -624,7 +624,7 @@ forceDelete.delete = (args: { id: string | number } | [id: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\FileManagerController::forceDelete
-* @see app/Http/Controllers/FileManagerController.php:290
+* @see app/Http/Controllers/FileManagerController.php:291
 * @route '/file-manager/{id}/force-delete'
 */
 const forceDeleteForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -639,7 +639,7 @@ const forceDeleteForm = (args: { id: string | number } | [id: string | number ] 
 
 /**
 * @see \App\Http\Controllers\FileManagerController::forceDelete
-* @see app/Http/Controllers/FileManagerController.php:290
+* @see app/Http/Controllers/FileManagerController.php:291
 * @route '/file-manager/{id}/force-delete'
 */
 forceDeleteForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -656,7 +656,7 @@ forceDelete.form = forceDeleteForm
 
 /**
 * @see \App\Http\Controllers\FileManagerController::emptyTrash
-* @see app/Http/Controllers/FileManagerController.php:313
+* @see app/Http/Controllers/FileManagerController.php:314
 * @route '/file-manager/trash/empty'
 */
 export const emptyTrash = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -671,7 +671,7 @@ emptyTrash.definition = {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::emptyTrash
-* @see app/Http/Controllers/FileManagerController.php:313
+* @see app/Http/Controllers/FileManagerController.php:314
 * @route '/file-manager/trash/empty'
 */
 emptyTrash.url = (options?: RouteQueryOptions) => {
@@ -680,7 +680,7 @@ emptyTrash.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\FileManagerController::emptyTrash
-* @see app/Http/Controllers/FileManagerController.php:313
+* @see app/Http/Controllers/FileManagerController.php:314
 * @route '/file-manager/trash/empty'
 */
 emptyTrash.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -690,7 +690,7 @@ emptyTrash.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => 
 
 /**
 * @see \App\Http\Controllers\FileManagerController::emptyTrash
-* @see app/Http/Controllers/FileManagerController.php:313
+* @see app/Http/Controllers/FileManagerController.php:314
 * @route '/file-manager/trash/empty'
 */
 const emptyTrashForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -705,7 +705,7 @@ const emptyTrashForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'
 
 /**
 * @see \App\Http\Controllers\FileManagerController::emptyTrash
-* @see app/Http/Controllers/FileManagerController.php:313
+* @see app/Http/Controllers/FileManagerController.php:314
 * @route '/file-manager/trash/empty'
 */
 emptyTrashForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

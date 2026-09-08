@@ -104,7 +104,7 @@ const formatDate = (dateStr?: string) => {
             </div>
 
             <DialogFooter v-if="file" class="flex sm:justify-between items-center gap-2">
-                <Button variant="outline" type="button" @click="emit('update:open', false)">
+                <Button variant="outline" type="button" @click="isOpen = false">
                     Close
                 </Button>
                 <a :href="`/file-manager/${file.id}/download`" download>

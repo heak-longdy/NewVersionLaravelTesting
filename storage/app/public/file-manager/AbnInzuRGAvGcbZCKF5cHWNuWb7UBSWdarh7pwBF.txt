@@ -1,0 +1,274 @@
+# Implementation Plan & System Analysis: Tax Paper Control Report
+
+This document presents the complete architectural review, data source analysis, gap analysis, and implementation plan for building the **Tax Paper Control Report** based on the reference Excel file:  
+`2_Report Asset Ownership_  Tax Paper Control Report.xlsx`.
+
+---
+
+## Summary
+
+### Overview
+- **Report Name:** Asset Ownership - Tax Paper Control Report (`2_Report Asset Ownership_  Tax Paper Control Report.xlsx`).
+- **Main Business Purpose:** To systematically monitor, control, and audit the physical custody and lifecycle status of heavy machinery, tractors, and agricultural/construction equipment secured by official import Tax Paper documents (វិក្កយបត្រពន្ធ / លិខិតបង់ពន្ធនាំចូល). The report tracks physical document custody (`In TLF` vs `Not in TLF`), document release/withdrawal dates (`Withdraw Date`), document filing reference codes (`Code Filling` / `Code`), asset technical specifications (Make/Model description, VIN chassis frame number, engine serial number, and asset classification), and comprehensive operational status trails across active lease contracts, paid-off loans, vendor buybacks, and written-off portfolios (`Actived Loan`, `Paid off`, `AED buy back tractor`, `Write Off`).
+
+### Data Sources
+The report consolidates data across **9 source tables** in the Tonle Core Banking System (`tonle1` database):
+1. **`MKT_LOAN_CONTRACT`**: Primary active loan contract table supplying contract IDs, customer IDs, officer IDs, branch codes, loan status (`LoanStatus`), asset specifications (brand, model, series, frame/VIN number, engine number), delivery/disbursement dates, and document filing/custody fields.
+2. **`MKT_CUSTOMER`**: Customer master table supplying borrower identity details (full English customer name: `LastNameEn` + `FirstNameEn`).
+3. **`MKT_OFFICER`**: Loan and sales officer table supplying lending officer names (`LastName` + `FirstName`).
+4. **`MKT_COLLATERAL_DE`**: Collateral detail table providing collateral document type (`Tax Paper`), custody records (`WithdrawalDate`, `WithdrawalBy`, `ReceivedBy`), and collateral filing numbers (`CollateralNumber`).
+5. **`MKT_LOAN_COLLATERAL`**: Collateral bridge table linking loan contracts (`MKT_LOAN_CONTRACT`) to their corresponding collateral records (`MKT_COLLATERAL_DE`).
+6. **`MKT_ASSET_DELIVERY`**: Leased asset delivery table supplying physical asset delivery dates, equipment descriptions, and delivery handover details.
+7. **`MKT_CLOSED_LOAN`**: Historical closed/paid-off loan contracts table used to include historical/matured loans with tax paper custody trails (`Paid off`).
+8. **`MKT_WRITE_OFF_DE`**: Written-off loan contracts detail table used to track written-off assets (`Status Trail = 'Write Off'`) and write-off notes (`Remark`).
+9. **`MKT_FORECLOSED_PROPERTY`**: Foreclosed and repossessed property table supplying records for repossessed equipment and vendor buybacks (`AED buy back tractor`).
+
+### Schema Updates
+To support the operational data capture requirements of this report, **2 core tables** require schema extensions (along with their corresponding `_INAU` in-authorization and `_HIST` history audit twin tables, totaling 6 physical database tables):
+
+1. **`MKT_LOAN_CONTRACT`** (including `MKT_LOAN_CONTRACT_INAU` and `MKT_LOAN_CONTRACT_HIST`):
+   - `CodeFiling` (`VARCHAR(35)` / `db.String(35)`): Physical archive box / filing sequence number (e.g., `5`, `11`, `1084`).
+   - `CollateralKeep` (`VARCHAR(50)` / `db.String(50)`): Physical document custody status / location (*In TLF*, *Not in TLF*).
+   - `WithdrawDate` (`VARCHAR(10)` / `db.String(10)`): Date tax paper document was withdrawn or released to the customer (`YYYY-MM-DD`).
+   - `AssetType` (`VARCHAR(50)` / `db.String(50)`): Asset classification category (*Tractor*, *Heavy Equipment*, *Vehicle*).
+   - `AuditUpdate` (`VARCHAR(255)` / `db.String(255)`): Audit / operational update note for tax paper tracking.
+
+2. **`MKT_FORECLOSED_PROPERTY`** (including `MKT_FORECLOSED_PROPERTY_INAU` and `MKT_FORECLOSED_PROPERTY_HIST`):
+   - `RepoStatus` (`VARCHAR(50)` / `db.String(50)`): Asset disposition status, identifying dealer buy-backs (*AED buy back tractor*) and repossession disposition.
+   - `FileNumber` (`VARCHAR(35)` / `db.String(35)`): Archive filing reference number for foreclosed/repossessed equipment.
+
+---
+
+## Phase 1: Review the Existing Core System
+
+### Current System Status
+* **The Tax Paper Control Report does not currently exist** as a dedicated report module in the CBS core system.
+* What currently exists in `local/Tonle/Report/assetownership.py` is the implementation for **Report 1** (*“1_Report Asset Ownership_ Registration Card & Mignette Control Report.xlsx”*), which has a 26-column layout across 5 sheets (`Summary`, `Current Customer List`, `Repo`, `Resold`, `Car registration Name`) focused on vehicle registration cards, plates, and vignette inspections.
+* The target report (**Report 2: Tax Paper Control Report**) is a dedicated 17-column report focused on machinery/tractors/equipment secured by **Tax Paper** (វិក្កយបត្រពន្ធ / លិខិតបង់ពន្ធនាំចូល) and tracks document custody (`In TLF` vs `Not in TLF`), withdrawal dates, and operational status trails (`Actived Loan`, `Paid off`, `AED buy back tractor`, `Write Off`).
+
+### Comparison with Current Implementation
+1. **Fields that exist and can be reused (11 fields):**
+   - `No` (Sequence row number)
+   - `AccountId` (Loan Contract ID / Account ID)
+   - `AccountName` (Borrower Customer Full Name)
+   - `Date Delivery` (Asset delivery / disbursement date)
+   - `Description` (Asset make, model, and series description)
+   - `Vin Number` (Frame/Chassis number)
+   - `Engine Number` (Engine serial number)
+   - `Asset Type` (Asset classification: Tractor, Heavy Equipment, Vehicle, etc.)
+   - `Lending officer` (Loan officer name)
+   - `Collateral Keep` (Custody status: In TLF / Not in TLF)
+   - `Withdraw Date` (Date document was withdrawn/released)
+
+2. **Fields that are missing from the current report / need implementation (4 fields):**
+   - `Status Trail` (Detailed lifecycle status: `Actived Loan`, `Paid off`, `AED buy back tractor`, `Write Off`)
+   - `Remark` (Additional remarks, e.g. `Write Off`)
+   - `Update` (Audit / note update field)
+   - `Code` (Filing sequence code / legacy ID duplicate)
+
+3. **Fields that need modified data mapping / new business logic (2 fields):**
+   - `Collateral type`: Fixed to `'Tax Paper'` (filtered/mapped for Tax Paper collaterals rather than registration cards).
+   - `Code Filling`: Filing reference or numeric index extracted from loan contract / collateral code.
+
+4. **Fields from Report 1 that are excluded in Report 2 (10 fields):**
+   - `Palte Number`, `Color`, `Eng.`, `No. Of Sheats`, `Year Model`, `Issue Date`, `Car Registration NAME`, `Inspection Date`, `Expired date`, `Renew start`, `Renew end`, `Comments if Other`, `File`.
+
+5. **Fields requiring new calculations / business logic:**
+   - **Status Trail calculation:** Evaluating loan contract status (`MKT_LOAN_CONTRACT.LoanStatus`, `MKT_CLOSED_LOAN.LoanStatus`), repo/foreclosure status (`MKT_FORECLOSED_PROPERTY`, `RepoStatus`), write-off records (`MKT_WRITE_OFF_DE`), and document withdrawal status (`MKT_COLLATERAL_DE.WithdrawalDate`) to output `'Actived Loan'`, `'Paid off'`, `'AED buy back tractor'`, or `'Write Off'`.
+   - **Collateral Keep calculation:** Determining `'In TLF'` when `WithdrawalDate` is empty/null, and `'Not in TLF'` when `WithdrawalDate` is set.
+   - **Contract scope:** Must query both active loan contracts (`MKT_LOAN_CONTRACT`) and closed loan contracts (`MKT_CLOSED_LOAN` / `MKT_WRITE_OFF_DE`) so that historical/withdrawn tax papers (`Paid off`, `Write Off`, `AED buy back`) remain tracked in the control report as reflected in the Excel reference.
+
+6. **Summary of field changes:**
+   - Total fields in Report 2: **17 columns**.
+   - Fields to add/modify compared to active report: **6 fields** (`Status Trail`, `Remark`, `Update`, `Code`, `Collateral type`, `Code Filling`).
+   - Fields to remove compared to Report 1: **10 fields**.
+
+7. **Capability of existing report engine:**
+   - The Morakot `CUSTOM_REPORT` engine, `FRM_CUSTOM_REPORT_SEARCH`, and `openpyxl` exporter fully support this layout, filtering, search, pagination, and multi-format Excel generation.
+
+---
+
+## Phase 2: Analyze the Excel Reference
+
+### Structure & Layout of “2_Report Asset Ownership_  Tax Paper Control Report.xlsx”
+- **Workbook Sheets:** Single visible sheet named `Tax Paper` (78 total rows, 31 data rows, 17 columns).
+- **Header Row (Row 1):** Bold 10pt text, light-gray / light-blue header fill, centered/left alignments, row height 20pt.
+- **Column Dimensions & Alignments:**
+
+| Col | Field Name | Width | Data Type | Excel Format | Alignment | Description / Sample Values |
+|:---|:---|:---:|:---:|:---:|:---:|:---|
+| **A** | `No` | 9.8 | Integer | `General` | Center | Sequence index (1, 2, 3...) |
+| **B** | `AccountId` | 13.2 | String | `General` | Center/Left | Loan Contract ID (`K00005`, `K00011.R`, `L08611`) |
+| **C** | `AccountName` | 22.3 | String | `General` | Left | Customer / Borrower Full Name |
+| **D** | `Date Delivery` | 16.5 | Date | `[$-409]d-mmm-yyyy;@` | Center | Delivery / Disbursement Date (`15-Feb-2021`) |
+| **E** | `Description` | 25.2 | String | `General` | Left | Asset Model (`Tractor John Deere 5065E`, `Roller JCB `) |
+| **F** | `Vin Number` | 27.3 | String | `General` | Left | Chassis / Frame Number |
+| **G** | `Engine Number` | 27.3 | String | `General` | Left | Engine Serial Number |
+| **H** | `Asset Type` | 20.5 | String | `General` | Left | Category (`Tractor`, `Heavy Equipment`) |
+| **I** | `Lending officer` | 27.3 | String | `General` | Left | Loan Officer Name (`Mr. A`, `Mr. B`) |
+| **J** | `Code Filling` | 12.2 | Integer/String | `General` | Center | Document Filing Code (`5`, `11`, `1084`, `N/A`) |
+| **K** | `Collateral type`| 12.2 | String | `General` | Center | Type description (`Tax Paper`) |
+| **L** | `Collateral Keep`| 12.2 | String | `General` | Center | Custody Location (`In TLF`, `Not in TLF`) |
+| **M** | `Withdraw Date` | 12.2 | Date/Null | `[$-409]d-mmm-yyyy;@` | Center | Date Withdrawn (`27-Feb-2025` or empty) |
+| **N** | `Status Trail` | 25.8 | String | `General` | Left/Center | Status (`Actived Loan`, `Paid off`, `AED buy back tractor`, `Write Off`) |
+| **O** | `Remark` | 21.8 | String/Null | `General` | Left | Notes (`Write Off` or empty) |
+| **P** | `Update` | 23.8 | String/Null | `General` | Left | Audit update text (empty) |
+| **Q** | `Code` | 18.5 | Integer/String | `General` | Center | Legacy/Filing Code (`5`, `11`, `N/A`) |
+
+### Inferred Business Rules
+1. **Collateral Keep Rule:**
+   $$\text{Collateral Keep} = \begin{cases} \text{'In TLF'} & \text{if } \text{Withdraw Date is null or empty} \\ \text{'Not in TLF'} & \text{if } \text{Withdraw Date is present} \end{cases}$$
+2. **Status Trail Rule:**
+   - If loan is active (`LoanStatus IN ('SMT', 'DIS', 'ACT')`) and not repoed/written-off: `Status Trail = 'Actived Loan'`
+   - If loan is closed/matured (`MKT_CLOSED_LOAN` or `LoanStatus = 'CLS'/'MRT'`): `Status Trail = 'Paid off'`
+   - If asset was repossessed or bought back by dealer (AED/vendor buyback or `RepoStatus` populated): `Status Trail = 'AED buy back tractor'`
+   - If loan was written off (`MKT_WRITE_OFF_DE` or `LoanStatus = 'WOF'`): `Status Trail = 'Write Off'`
+3. **Filtering & Parameters:**
+   - **Branch:** Filter by branch code or 'ALL'.
+   - **OfficerID:** Filter by loan officer.
+   - **DateFrom / DateTo:** Filter by delivery/disbursement date range.
+   - **StatusTrail / LoanStatus:** Optional dropdown filter (`All`, `Active Loan`, `Paid Off`, `Buy Back / Repo`, `Write Off`).
+   - **CollateralKeep:** Optional filter (`All`, `In TLF`, `Not in TLF`).
+
+---
+
+## Phase 3: Data Source Analysis
+
+| Report Column | Target Data Source | Source Table | Source Column(s) | Join / Relationship | Transformation / Business Logic | Data Status |
+|:---|:---|:---|:---|:---|:---|:---:|
+| `No` | Generated | N/A | Row index | N/A | Sequence `1, 2, 3...` | ✅ Available |
+| `AccountId` | Loan Contract | `MKT_LOAN_CONTRACT` / `MKT_CLOSED_LOAN` | `ID` | Primary key | Direct value | ✅ Available |
+| `AccountName` | Customer | `MKT_CUSTOMER` | `LastNameEn`, `FirstNameEn` | `ContractCustomerID = MKT_CUSTOMER.ID` | Concatenate `LastNameEn + ' ' + FirstNameEn` | ✅ Available |
+| `Date Delivery` | Loan / Asset Delivery | `MKT_LOAN_CONTRACT` / `MKT_ASSET_DELIVERY` | `DeliveryDate`, `DisbursementDate`, `ValueDate` | `LoanAppID = MKT_LOAN_CONTRACT.LoanApplicationID` | `DeliveryDate` fallback `DisbursementDate` fallback `ValueDate` | ✅ Available |
+| `Description` | Loan / Collateral | `MKT_LOAN_CONTRACT` / `MKT_COLLATERAL_DE` | `AssetDescription`, `Brand`, `Model`, `Series`, `Description` | Joined via `MKT_LOAN_COLLATERAL` | `AssetDescription` or `Brand + ' ' + Model + ' ' + Series` or `Collateral.Description` | ✅ Available |
+| `Vin Number` | Loan / Collateral | `MKT_LOAN_CONTRACT` / `MKT_COLLATERAL_DE` | `FrameNo` | Joined via `MKT_LOAN_COLLATERAL` | Cleaned `FrameNo` | ✅ Available |
+| `Engine Number` | Loan / Collateral | `MKT_LOAN_CONTRACT` / `MKT_COLLATERAL_DE` | `EngineNo` | Joined via `MKT_LOAN_COLLATERAL` | Cleaned `EngineNo` | ✅ Available |
+| `Asset Type` | Loan / Category | `MKT_LOAN_CONTRACT` / `MKT_ASSET_DELIVERY` | `AssetType`, `ProductCatalog`, `Category` | Loan Contract columns | `'Tractor'` if brand/model is tractor/John Deere/Kubota; `'Heavy Equipment'` if roller/excavator; `'Vehicle'` otherwise | ⚠️ Business Logic |
+| `Lending officer`| Officer | `MKT_OFFICER` | `LastName`, `FirstName` | `ContractOfficerID = MKT_OFFICER.ID` | `LastName + ' ' + FirstName` | ✅ Available |
+| `Code Filling` | Collateral / Loan | `MKT_COLLATERAL_DE` / `MKT_LOAN_CONTRACT` | `CollateralNumber`, `LegacyID`, `ID` | `MKT_COLLATERAL_DE.CollateralNumber` | Collateral filing code or contract number suffix | 🔄 Mapping |
+| `Collateral type`| Fixed / Collateral | `MKT_COLLATERAL_DE` | `CollateralType`, `Description` | Joined via `MKT_LOAN_COLLATERAL` | Hardcoded/mapped to `'Tax Paper'` | 🔄 Mapping |
+| `Collateral Keep`| Collateral | `MKT_COLLATERAL_DE` | `WithdrawalDate`, `CollateralStatus` | Joined via `MKT_LOAN_COLLATERAL` | `'Not in TLF'` if `WithdrawalDate` is set, else `'In TLF'` | ⚠️ Business Logic |
+| `Withdraw Date` | Collateral | `MKT_COLLATERAL_DE` | `WithdrawalDate` | Joined via `MKT_LOAN_COLLATERAL` | Date format `YYYY-MM-DD` | ✅ Available |
+| `Status Trail` | Loan / Closed / Repo / WO | `MKT_LOAN_CONTRACT`, `MKT_CLOSED_LOAN`, `MKT_FORECLOSED_PROPERTY`, `MKT_WRITE_OFF_DE` | `LoanStatus`, `RepoStatus`, `FCOperation` | Multi-table status resolution | Evaluates `'Actived Loan'`, `'Paid off'`, `'AED buy back tractor'`, `'Write Off'` | ⚠️ Business Logic |
+| `Remark` | Write Off / Note | `MKT_WRITE_OFF_DE` / `MKT_LOAN_CONTRACT` | `LoanPurposeRemark`, `DeliveryNote` | Write off join | `'Write Off'` if written off; custom note if present | ⚠️ Business Logic |
+| `Update` | Audit Note | `MKT_COLLATERAL_DE` | `CheckBy`, `Note` | Collateral join | Audit text / empty | ✅ Available |
+| `Code` | Collateral / Loan | `MKT_COLLATERAL_DE` / `MKT_LOAN_CONTRACT` | `CollateralNumber`, `LegacyID` | Same as `Code Filling` | Numeric / filing ID | 🔄 Mapping |
+
+---
+
+## Phase 4: Module Analysis
+
+### Module Placement & Architecture Recommendation
+1. **Module Location:** `local/Tonle/Report/taxpapercontrol.py` (or `local/Tonle/Report/assetownership_taxpaper.py`).
+2. **Why this module location is appropriate:**
+   - Follows Tonle CBS custom reporting conventions (matches `assetownership.py`, `writeoffreport.py`, `creditreview.py`).
+   - Keeps Report 1 (`Asset Ownership, Registration Card & Mignette Control Report`) and Report 2 (`Asset Ownership - Tax Paper Control Report`) modular, clean, and individually maintainable without risk of breaking Report 1.
+3. **Route Endpoints:**
+   - Web View: `/Morakot/Report/TaxPaperControl`
+   - Excel Export: `/Morakot/Report/TaxPaperControl/Excel` (and `/Morakot/Report/TaxPaperControlExport`)
+4. **URL & Menu Registration:**
+   - Register in `local/Tonle/urlregister.py`.
+   - Provide SQL seed in `local/Tonle/Report/seed_tax_paper_report.sql` to register form `TXPRPT` in `MKT_FORM`.
+5. **Dependencies:**
+   - `app.tools.mktcustomreport.CUSTOM_REPORT`
+   - `openpyxl` for high-fidelity Excel generation.
+   - `MKT_LOAN_CONTRACT`, `MKT_CLOSED_LOAN`, `MKT_COLLATERAL_DE`, `MKT_CUSTOMER`, `MKT_OFFICER`, `MKT_WRITE_OFF_DE`, `MKT_FORECLOSED_PROPERTY`.
+
+---
+
+## Phase 5: Gap Analysis
+
+| Field # | Field Name | Classification | Current State | Required Changes |
+|:---:|:---|:---:|:---|:---|
+| 1 | `No` | ✅ Already available | Standard counter | Reused directly |
+| 2 | `AccountId` | ✅ Already available | `MKT_LOAN_CONTRACT.ID` | Extend query to union `MKT_CLOSED_LOAN.ID` |
+| 3 | `AccountName` | ✅ Already available | `MKT_CUSTOMER` name | Reused directly |
+| 4 | `Date Delivery` | ✅ Already available | `DeliveryDate` / `DisbursementDate` | Reused directly |
+| 5 | `Description` | ✅ Already available | Asset & Collateral description | Reused directly |
+| 6 | `Vin Number` | ✅ Already available | `FrameNo` | Reused directly |
+| 7 | `Engine Number` | ✅ Already available | `EngineNo` | Reused directly |
+| 8 | `Asset Type` | ⚠️ Available via logic | Static 'Vehicle' in Report 1 | Add intelligent categorization (`Tractor`, `Heavy Equipment`, `Vehicle`) |
+| 9 | `Lending officer`| ✅ Already available | `MKT_OFFICER` name | Reused directly |
+| 10 | `Code Filling` | 🔄 Requires mapping | Null in Report 1 | Map to `CollateralNumber` or loan numeric suffix |
+| 11 | `Collateral type`| 🔄 Requires mapping | 'Car Registration Card + Migette' | Set/filter to `'Tax Paper'` |
+| 12 | `Collateral Keep`| ⚠️ Available via logic | Null in Report 1 | Derive `'In TLF'` vs `'Not in TLF'` from `WithdrawalDate` |
+| 13 | `Withdraw Date` | ✅ Already available | `MKT_COLLATERAL_DE.WithdrawalDate` | Reused directly with proper date formatting |
+| 14 | `Status Trail` | ⚠️ Available via logic | Missing | Implement 4-tier status resolution (`Actived Loan`, `Paid off`, `AED buy back tractor`, `Write Off`) |
+| 15 | `Remark` | ⚠️ Available via logic | Missing | Populate `'Write Off'` or contract remark |
+| 16 | `Update` | ➕ Missing / Optional | Missing | Add column mapped to audit/note (default `None`) |
+| 17 | `Code` | 🔄 Requires mapping | Missing | Map to `Code Filling` / legacy filing code |
+
+---
+
+## Phase 6: Implementation Plan
+
+```mermaid
+flowchart TD
+    A[Client Request / Filters] --> B[local/Tonle/Report/taxpapercontrol.py]
+    B --> C[Query MKT_LOAN_CONTRACT Active Loans]
+    B --> D[Query MKT_CLOSED_LOAN Closed Loans]
+    B --> E[Query MKT_WRITE_OFF_DE & MKT_FORECLOSED_PROPERTY]
+    C & D & E --> F[Join MKT_COLLATERAL_DE, MKT_CUSTOMER, MKT_OFFICER]
+    F --> G[Apply Business Logic: Status Trail, Collateral Keep, Asset Type]
+    G --> H{Action?}
+    H -->|HTML Web View| I[Render custom_report_master.html with 17-col TableHeader]
+    H -->|Excel Export| J[Generate 17-col Styled Workbook via openpyxl]
+```
+
+### Proposed Code Changes
+
+#### [MODIFY] [models.py](file:///home/admin/Project/CBS/Tonle/app/LoanContract/models.py)
+* Extend `MKT_LOAN_CONTRACT`, `MKT_LOAN_CONTRACT_INAU`, and `MKT_LOAN_CONTRACT_HIST` with:
+  - `CodeFiling` (`db.String(35)`): Physical archive box / filing sequence number.
+  - `CollateralKeep` (`db.String(50)`): Physical document custody status (*In TLF*, *Not in TLF*).
+  - `WithdrawDate` (`db.String(10)`): Date tax paper document was withdrawn/released.
+  - `AssetType` (`db.String(50)`): Asset classification category (*Tractor*, *Heavy Equipment*, *Vehicle*).
+  - `AuditUpdate` (`db.String(255)`): Operational audit update note.
+
+#### [MODIFY] [models.py](file:///home/admin/Project/CBS/Tonle/app/ForeclosedProperty/models.py)
+* Extend `MKT_FORECLOSED_PROPERTY`, `MKT_FORECLOSED_PROPERTY_INAU`, and `MKT_FORECLOSED_PROPERTY_HIST` with:
+  - `RepoStatus` (`db.String(50)`): Repossession and dealer buyback status (*AED buy back tractor*).
+  - `FileNumber` (`db.String(35)`): Archive file reference number.
+
+#### [NEW] [add_tax_paper_control_fields.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/migrations/add_tax_paper_control_fields.sql)
+* PostgreSQL migration script to safely add new columns (`ADD COLUMN IF NOT EXISTS`) to live database tables.
+
+#### [MODIFY] [forms.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/LoanContract/forms.py)
+* Add Tax Paper control fields (`CodeFiling`, `CollateralKeep`, `WithdrawDate`, `AssetType`, `AuditUpdate`) into the loan contract input and edit tabs.
+
+#### [NEW] [taxpapercontrol.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/taxpapercontrol.py)
+* Create the report backend module with:
+  - `FRM_TAX_PAPER_SEARCH_EX` (Branch, OfficerID, DateFrom, DateTo, StatusTrail, CollateralKeep).
+  - `query_tax_paper_data(**kwargs)`: Unified query spanning active loans (`MKT_LOAN_CONTRACT`), closed loans (`MKT_CLOSED_LOAN`), collateral details (`MKT_COLLATERAL_DE`), customer info (`MKT_CUSTOMER`), loan officer info (`MKT_OFFICER`), write-off records (`MKT_WRITE_OFF_DE`), and foreclosure records (`MKT_FORECLOSED_PROPERTY`).
+  - `getRecordRow(**kwargs)`: Formats all 17 rows with proper alignment classes (`text-center`, `text-left`, `text-bold`).
+  - `getTaxPaperReport(**kwargs)`: Configures the 17-column `TableHeader` for the Morakot UI.
+  - `build_excel_workbook(**kwargs)`: Builds pixel-perfect Excel sheet matching `2_Report Asset Ownership_  Tax Paper Control Report.xlsx` with exact fonts (`Arial 10pt`), header fills, column widths, number formats (`[$-409]d-mmm-yyyy;@`), and thin borders.
+  - `@app.route('/Morakot/Report/TaxPaperControl')`: Web view endpoint with permission checking.
+  - `@app.route('/Morakot/Report/TaxPaperControl/Excel')` and `@app.route('/Morakot/Report/TaxPaperControlExport')`: Excel download endpoints.
+
+#### [NEW] [seed_tax_paper_report.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/seed_tax_paper_report.sql)
+* SQL seed script to insert `TXPRPT` into `MKT_FORM` (`URL = 'Report/TaxPaperControl'`) for menu discovery and granular role-based access control.
+
+#### [MODIFY] [urlregister.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/urlregister.py)
+* Register the new report module:
+  ```python
+  # Report Asset Ownership - Tax Paper Control Report
+  from .Report.taxpapercontrol import *
+  ```
+
+---
+
+## Verification Plan
+
+### Automated & Data Integrity Tests
+- Run Python unit test scripts in the CBS virtual environment (`venv1`) verifying:
+  1. `query_tax_paper_data()` executes clean queries with zero SQL syntax or join errors.
+  2. All 17 fields are correctly extracted, formatted, and typed.
+  3. `build_excel_workbook()` produces a valid `.xlsx` file matching the 17 headers and structure of `2_Report Asset Ownership_  Tax Paper Control Report.xlsx`.
+
+### Manual & UI Verification
+- Start/test CBS server and verify in the browser:
+  1. Navigate to `http://127.0.0.1:5005/Morakot/Report/TaxPaperControl`.
+  2. Test search filters (Branch, Officer, Date Range).
+  3. Verify data table rendering with 17 columns.
+  4. Click "Excel" export button and verify downloaded spreadsheet matches the template.

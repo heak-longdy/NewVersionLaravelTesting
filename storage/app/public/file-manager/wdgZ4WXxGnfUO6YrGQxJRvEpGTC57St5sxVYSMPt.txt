@@ -1,0 +1,267 @@
+# Master Implementation Plan: Tonle CBS Operational & Executive Report Suite
+
+This implementation plan outlines the end-to-end technical approach for building and integrating the complete suite of **8 operational, risk management, and executive control reports** into the **Tonle Core Banking System (`tonle1` PostgreSQL database)**, based on the specifications in [ReportImplementationPlan](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan) and reference templates in [ReportExcel](file:///home/admin/Project/CBS/Tonle/ReportExcel).
+
+---
+
+## Detailed Confirmation per Report
+
+All **8 reports** have been verified against their Excel specifications in [ReportExcel](file:///home/admin/Project/CBS/Tonle/ReportExcel), their technical implementation plans in [ReportImplementationPlan](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan), and the live `tonle1` database schema.
+
+### Master Summary & Feasibility Matrix
+
+| # | Report Name | Reference Template | Implementation Plan File | Can it be created? | Target Sheets & Columns | Schema Changes Required? | CBS Implementation Readiness |
+|:---:|:---|:---|:---|:---:|:---|:---:|:---|
+| **1** | **Asset Ownership, Registration Card & Mignette Control Report** | [1_...xlsx](file:///home/admin/Project/CBS/Tonle/ReportExcel/1_Report%20Asset%20Ownership_%20Registration%20Card%20&%20Mignette%20Control%20Report.xlsx) | [1_Report...md](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan/1_Report%20Asset%20Ownership_%20Registration%20Card%20&%20Mignette%20Control%20Report.md) | **CONFIRMED (YES)** | `Current Customer List` (26 cols) | Optional (6 in `MKT_COLLATERAL_DE`, 1 in `MKT_LOAN_CONTRACT`) | Backend exists in [assetownership.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/assetownership.py); needs OpenPyXL Navy `#1F4E79` exporter and menu seed. |
+| **2** | **Asset Ownership - Tax Paper Control Report** | [2_...xlsx](file:///home/admin/Project/CBS/Tonle/ReportExcel/2_Report%20Asset%20Ownership_%20%20Tax%20Paper%20Control%20Report.xlsx) | [2_Report...md](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan/2_Report%20Asset%20Ownership_%20%20Tax%20Paper%20Control%20Report.md) | **CONFIRMED (YES)** | `Tax Paper` (17 cols) | Optional (3 in `MKT_COLLATERAL_DE`) | Backend exists in [taxpapercontrol.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/taxpapercontrol.py); needs query UNION with `MKT_CLOSED_LOAN`, custody logic (`In TLF`/`Not in TLF`), and Gray `#D9D9D9` exporter. |
+| **3** | **GPS - Master List Control All Loans Report** | [3_...xlsx](file:///home/admin/Project/CBS/Tonle/ReportExcel/3_Report%20GPS%20_%20Master%20list%20control%20all%20loans.xlsx) | [3_Report...md](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan/3_Report%20GPS%20_%20Master%20list%20control%20all%20loans.md) | **CONFIRMED (YES)** | `Master list` (18 cols) | None required (defaults Sub-GPS cols 15 & 16 to `'No'`) | Ready to build as new module `gpsmasterlist.py` with Theme 8/7/Light Green fills and closed loan unions. |
+| **4** | **GPS - Unplug Report (Daily)** | [4_...xlsx](file:///home/admin/Project/CBS/Tonle/ReportExcel/4_Report%20GPS%20_%20Unplug%20Report%20%28Daily%29.xlsx) | [4_Report...md](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan/4_Report%20GPS%20_%20Unplug%20Report%20%28Daily%29.md) | **CONFIRMED (YES)** | ` GPS_Daily Report` (37 cols) | **Yes** (10 operational tracking fields in `MKT_GPS_TRACKER`) | Ready to build as new module `gpsunplug.py`. DDL script and ORM model updates are fully specified. |
+| **5** | **Insurance - Master List Control Insurance All Loans Report** | [5_...xlsx](file:///home/admin/Project/CBS/Tonle/ReportExcel/5_Report%20Insurance%20_%20Master%20list%20control%20Insurance%20all%20loans.xlsx) | [5_Report...md](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan/5_Report%20Insurance%20_%20Master%20list%20control%20Insurance%20all%20loans.md) | **CONFIRMED (YES)** | `Master list` (19 cols) + `Summary` (8-col cross-tab matrix) | Optional (multi-year policy fields in `MKT_LOAN_CONTRACT`) | Ready to build as new module `insurancemastercontrol.py` with multi-sheet OpenPyXL generator and dynamic formulas. |
+| **6** | **Loans Closed - Master List Control All Loans Closed Report** | [6_...xlsx](file:///home/admin/Project/CBS/Tonle/ReportExcel/6_Report%20Loans%20Closed%20_%20Master%20List%20controll%20all%20loans%20closed.xlsx) | [6_Report...md](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan/6_Report%20Loans%20Closed%20_%20Master%20List%20controll%20all%20loans%20closed.md) | **CONFIRMED (YES)** | `Loans Closed` (15 cols) | Optional (dedicated baseline maturity & closing text) | Ready to build as new module `loansclosedcontrol.py` with Cyan, Peach, Magenta, Yellow headers and dual maturity dates. |
+| **7** | **CBC Enquiry Usage Report** | [7_...xlsx](file:///home/admin/Project/CBS/Tonle/ReportExcel/7_Report%20on%20CBC%20Enquiry%20Usage.xlsx) | [7_Report...md](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan/7_Report%20on%20CBC%20Enquiry%20Usage.md) | **CONFIRMED (YES)** | 7 sheets: `2026` (18 cols) + `Summary` (38 cols) + 5 Weekly sheets | **0 schema changes required** (100% existing relational data) | Ready to build as new module `cbcenquiryusage.py` with 7-sheet OpenPyXL exporter and subtotal formulas. |
+| **8** | **Loan Disbursement Report** | [8_...xlsx](file:///home/admin/Project/CBS/Tonle/ReportExcel/8_Report%20on%20Loan%20Disbursment.xlsx) | [8_Report...md](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan/8_Report%20on%20Loan%20Disbursment.md) | **CONFIRMED (YES)** | `Report` (51 cols) | **0 schema changes required** (multi-table join across 19 tables) | Ready to build as new module `loandisbursement.py` covering all 51 parameters, reference numbering, and pricing breakdowns. |
+
+---
+
+### In-Depth Feasibility & Architectural Analysis per Report
+
+#### Report 1: Asset Ownership, Registration Card & Mignette Control Report
+- **Can it be created?** **CONFIRMED (YES)**.
+- **Business Purpose**: Master operational safe-custody control for physical vehicle registration cards, annual road tax mignette/vignette stickers, and technical inspection dates across the active portfolio.
+- **Target Layout**: Sheet `Current Customer List` (26 operational columns, Row 2 header, Navy fill `#1F4E79`, white bold text).
+- **Database Tables Verified**: `MKT_LOAN_CONTRACT`, `MKT_CUSTOMER`, `MKT_OFFICER`, `MKT_COLLATERAL_DE`, `MKT_LOAN_COLLATERAL`, `MKT_ASSET_DELIVERY`, `MKT_REPORT_ENGINE`, `MKT_FORM`.
+- **Schema & Data Readiness**: 20 columns exist directly. 6 operational fields (`InspectionDate`, `InspectionStatus`, `RenewStartDate`, `RenewEndDate`, `CollateralKeepStatus`, `FilingCabinet`) have dedicated DDL provided in the plan, with fallback logic to existing fields (`ReceivedDate`, `IssuedDate`, `Maturity`, `ReceivedBy`, `HouseNo`) ensuring zero disruption if DDL execution is deferred.
+- **Deliverables**: Refine [assetownership.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/assetownership.py), build OpenPyXL exporter, register `/Morakot/Report/AssetOwnership/Excel`, execute seed script.
+
+#### Report 2: Asset Ownership - Tax Paper Control Report
+- **Can it be created?** **CONFIRMED (YES)**.
+- **Business Purpose**: Operational safe-custody and legal ownership audit report for agricultural machinery (John Deere Tractors) and heavy equipment (JCB Rollers) held under Customs/Import Tax Paper titles.
+- **Target Layout**: Sheet `Tax Paper` (17 columns, Header Row 1, Light Gray fill `#D9D9D9`, Arial 10pt bold, date format `[$-409]d-mmm-yyyy;@`).
+- **Database Tables Verified**: `MKT_LOAN_CONTRACT`, `MKT_CLOSED_LOAN`, `MKT_CUSTOMER`, `MKT_COLLATERAL_DE`, `MKT_OFFICER`, `MKT_LOAN_COLLATERAL`, `MKT_ASSET_DELIVERY`.
+- **Schema & Data Readiness**: 100% computable from existing tables. Requires adding a SQL `UNION` with `MKT_CLOSED_LOAN` (so closed/paid-off contracts appear) and deriving `Collateral Keep` (`In TLF` vs `Not in TLF` based on `WithdrawalDate`) and `Status Trail` (`Actived Loan`, `Paid off`, `Write Off`).
+- **Deliverables**: Update [taxpapercontrol.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/taxpapercontrol.py), build OpenPyXL exporter, register `/Morakot/Report/AssetOwnershipTaxPaper/Excel`, execute seed script.
+
+#### Report 3: GPS - Master List Control All Loans Report
+- **Can it be created?** **CONFIRMED (YES)**.
+- **Business Purpose**: Master tracking list across all active, closed, and written-off contracts consolidating vehicle specifications, financial exposure (balance, overdue, DPD), loan lifecycle milestones, and primary GPS installation/supplier status.
+- **Target Layout**: Sheet `Master list` (18 columns, Calibri 11pt Bold, Theme 8 Olive header, Theme 7 Teal header for Main GPS, Light Green `FF92D050` for Sub-GPS).
+- **Database Tables Verified**: `MKT_LOAN_CONTRACT`, `MKT_CLOSED_LOAN`, `MKT_CUSTOMER`, `MKT_GPS_TRACKER`, `MKT_CATEGORY`, `MKT_PAST_DUE`, `MKT_PD_DATE`, `MKT_WRITE_OFF_DE`.
+- **Schema & Data Readiness**: 12 fields direct, 4 calculated (`BalanceOverdue`, `OverdueDays`, `Asset Type`, `Loans Status`). Sub-GPS fields (Columns 15 & 16) default to `'No'` matching template sample records without needing table alters.
+- **Deliverables**: New module `local/Tonle/Report/gpsmasterlist.py`, OpenPyXL exporter, seed script `seed_gps_master_list_report.sql`.
+
+#### Report 4: GPS - Unplug Report (Daily)
+- **Can it be created?** **CONFIRMED (YES)**.
+- **Business Purpose**: Daily operational and risk alert report for GPS-equipped assets experiencing hardware disconnection, loss of satellite signal, or prolonged offline status, merged with live repayment schedule delinquency data.
+- **Target Layout**: Sheet ` GPS_Daily Report` (37 columns, daily monitoring, risk ratings, recovery officers, and collection notes).
+- **Database Tables Verified**: `MKT_LOAN_CONTRACT`, `MKT_CUSTOMER`, `MKT_REP_SCHEDULE`, `MKT_GPS_TRACKER`, `MKT_OFFICER`, `MKT_CATEGORY`, `MKT_COLLATERAL_DE`.
+- **Schema & Data Readiness**: Financial fields and delinquency metrics are calculated dynamically from `MKT_REP_SCHEDULE`. To support daily operational case workflow, `MKT_GPS_TRACKER` requires 10 columns (`TonleStatus`, `LastServerDate`, `UnplugDays`, `Risk`, `ReInstallationCheck`, `InProgress`, `ReInstallationDate`, `Other`, `CollectorInCharge`, `PlateNumber`, `IMEI`). The complete DDL and ORM definitions are prepared.
+- **Deliverables**: DDL execution in `tonle1`, ORM update in `local/Tonle/GPSTracker/models.py`, new module `local/Tonle/Report/gpsunplug.py`, OpenPyXL exporter, seed script `seed_gps_unplug_report.sql`.
+
+#### Report 5: Insurance - Master List Control Insurance All Loans Report
+- **Can it be created?** **CONFIRMED (YES)**.
+- **Business Purpose**: Multi-year collateral insurance governance and renewal tracking across active and closed portfolios, plus an automated executive cross-tabulation matrix of insured vs. uninsured coverage by asset type.
+- **Target Layout**: 2 Worksheets — Sheet 1: `Master list` (19 columns) and Sheet 2: `Summary` (8-column aggregation matrix with `=COUNTIF` / `=SUM` formulas).
+- **Database Tables Verified**: `MKT_LOAN_CONTRACT`, `MKT_CLOSED_LOAN`, `MKT_CUSTOMER`, `MKT_INSURANCE`, `MKT_INSURANCE_COMPANY`, `MKT_PAST_DUE`, `MKT_PD_DATE`, `MKT_PRODUCT_CATALOG`.
+- **Schema & Data Readiness**: 100% computable from existing contract and insurance tables. Policy renewal periods 1 and 2 map directly to `MKT_INSURANCE` (`InsurePeriod = 1` vs `2`).
+- **Deliverables**: New module `local/Tonle/Report/insurancemastercontrol.py` with multi-sheet OpenPyXL builder, seed script `seed_insurance_master_control_report.sql`.
+
+#### Report 6: Loans Closed - Master List Control All Loans Closed Report
+- **Can it be created?** **CONFIRMED (YES)**.
+- **Business Purpose**: Centralized master control for closed, settled (`TMN`), matured (`MRT`), and written-off (`WOF`) contracts, tracking baseline opening terms, initial vs. amended maturity dates, final payoff settlement amounts, physical document custody (`In TLF` vs `Not in TLF`), and document withdrawal dates.
+- **Target Layout**: Sheet `Loans Closed` (15 columns, Row 1 Title "Tonel Finance Plc.", Row 2 Subtitle, Row 3 Header with Cyan `#00B0F0`, Peach `#F3915B`, Magenta `#F71DE7`, and Yellow `#FFFF00` fills).
+- **Database Tables Verified**: `MKT_CLOSED_LOAN`, `MKT_CUSTOMER`, `MKT_LOAN_CONTRACT_HIST`, `MKT_LOAN_AMENDMENT`, `MKT_COLLATERAL_DE`, `MKT_WRITE_OFF_DE`, `MKT_COLLECTION`.
+- **Schema & Data Readiness**: Baseline maturity `Date Maturity (1)` is extracted from `MKT_LOAN_CONTRACT_HIST` (`@0`). Payoff amounts are resolved from `MKT_LOAN_AMENDMENT` / `MKT_COLLECTION`. Custody status is derived from `MKT_COLLATERAL_DE.WithdrawalDate`.
+- **Deliverables**: New module `local/Tonle/Report/loansclosedcontrol.py`, OpenPyXL exporter with multicolor headers, seed script `seed_loans_closed_report.sql`.
+
+#### Report 7: CBC Enquiry Usage Report
+- **Can it be created?** **CONFIRMED (YES)**.
+- **Business Purpose**: Comprehensive audit, reconciliation, and sales performance tracking of Credit Bureau Cambodia (CBC) enquiries across 12 monthly cycles and weekly breakdowns by Sales Officer.
+- **Target Layout**: 7 Worksheets — Sheet 1: `2026` (18-column detail transaction listing), Sheet 2: `Summary` (38-column 12-month annual matrix by Sales Officer), Sheets 3–7: `Weekly Report_January` to `Weekly Report_May` (weekly date-range breakdown matrices with `=SUBTOTAL(9, ...)` formulas).
+- **Database Tables Verified**: `MKT_CBC`, `MKT_CBC_DE`, `MKT_LOAN_APPLICATION`, `MKT_CUSTOMER`, `MKT_OFFICER`, `MKT_USER`, `MKT_LOAN_PRODUCT`.
+- **Schema & Data Readiness**: **0 schema changes required!** All 18 detail fields and dynamic monthly/weekly matrices are derived from existing tables. Officer names from the Excel file (e.g. *Chhan Rithy*, *Wet Sochea*, *Meas Neng*) exactly match `MKT_OFFICER` records in `tonle1`.
+- **Deliverables**: New module `local/Tonle/Report/cbcenquiryusage.py` with 7-sheet OpenPyXL builder, seed script `seed_cbc_enquiry_usage_report.sql`.
+
+#### Report 8: Loan Disbursement Report
+- **Can it be created?** **CONFIRMED (YES)**.
+- **Business Purpose**: Comprehensive 51-parameter loan origination, pricing breakdown, dealer commission, and logistics tracking report for all disbursed contracts.
+- **Target Layout**: Sheet `Report` (51 columns, Row 1 Title "Tonle Finance", Row 2 "Loan Disbursement as of DD/MMM/YYYY", Row 4 Header columns A through AY).
+- **Database Tables Verified**: `MKT_LOAN_CONTRACT`, `MKT_LOAN_APPLICATION`, `MKT_CUSTOMER`, `MKT_OFFICER`, `MKT_ASSET_DELIVERY`, `MKT_GPS_TRACKER`, `MKT_GUARANTOR`, `MKT_LOAN_CO_BORROWER`, `MKT_VENDOR`, `MKT_VENDOR_CONTACT_PERSON`, `MKT_VENDOR_BANK_ACCOUNT`, `MKT_SECTOR`, `MKT_PROVINCE`, `MKT_COLLATERAL_DE`, `MKT_LOAN_CHARGE`, `MKT_INSURANCE`.
+- **Schema & Data Readiness**: **0 schema changes required!** All 51 columns are populated through standard SQL `JOIN` queries across 19 existing tables with Python calculations for `REF. Nº` (`YYYY/ProductType/LoanID/OfficerID`), Down Payment %, and Finance %.
+- **Deliverables**: New module `local/Tonle/Report/loandisbursement.py`, OpenPyXL exporter with exact header titles, seed script `seed_loan_disbursement_report.sql`.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Implementation Rollout Strategy**:
+> To ensure quality and avoid database lockups or regressions in the CBS, we propose delivering the 8 reports in **4 distinct execution phases**:
+> 1. **Phase 1 (Quick Wins - Existing Backend Modules)**: 
+>    - **Report 1**: Asset Ownership, Registration Card & Mignette Control Report
+>    - **Report 2**: Asset Ownership - Tax Paper Control Report
+> 2. **Phase 2 (Zero-Schema Modification Reports)**:
+>    - **Report 7**: CBC Enquiry Usage Report (7 worksheets, subtotal formulas, 0 DDL alters)
+>    - **Report 8**: Loan Disbursement Report (51 columns across 19 tables, 0 DDL alters)
+> 3. **Phase 3 (GPS Risk Management Reports)**:
+>    - **Report 3**: GPS Master List Control All Loans (18 columns, active/closed loan unions)
+>    - **Report 4**: GPS Unplug Daily Report (37 columns, requires `MKT_GPS_TRACKER` schema update)
+> 4. **Phase 4 (Insurance & Portfolio Closure Reports)**:
+>    - **Report 5**: Insurance Master List Control (Multi-sheet: `Master list` + `Summary` matrix)
+>    - **Report 6**: Loans Closed Master List Control (15 columns, dual maturity, custody audit)
+
+> [!WARNING]
+> **Database Alteration for Report 4 (`MKT_GPS_TRACKER`)**:
+> Report 4 (GPS Unplug Daily) requires adding 10 operational tracking fields to `MKT_GPS_TRACKER`, `MKT_GPS_TRACKER_INAU`, and `MKT_GPS_TRACKER_HIST` (`TonleStatus`, `LastServerDate`, `UnplugDays`, `Risk`, `ReInstallationCheck`, `InProgress`, `ReInstallationDate`, `Other`, `CollectorInCharge`, `PlateNumber`, `IMEI`).
+> These alters use `ADD COLUMN IF NOT EXISTS` with safe default values so existing functionality and tests will not break.
+
+---
+
+## Open Questions
+
+> [!NOTE]
+> 1. **Execution Scope**: Would you prefer us to implement **all 8 reports sequentially** following the 4 phases outlined above, or would you like to prioritize a specific report first (e.g. Report 1 or Report 8)?
+> 2. **Sub-GPS Tracking for Report 3**: For Columns 15 & 16 of Report 3 (`Sub_GPS Supplier Name` and `Sub- Supplier`), the template sample data shows `'No'`. Should we default these to `'No'` via SQL/Python logic (recommended for Phase 1), or alter `MKT_GPS_TRACKER` to store sub-GPS hardware vendors now?
+> 3. **Report 7 Version**: We will use [7_Report on CBC Enquiry Usage.md](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan/7_Report%20on%20CBC%20Enquiry%20Usage.md) (the updated standardized plan) and archive [7_Report on CBC Enquiry UsageV1.md](file:///home/admin/Project/CBS/Tonle/ReportImplementationPlan/7_Report%20on%20CBC%20Enquiry%20UsageV1.md). Please confirm if this is aligned with your expectations.
+
+---
+
+## Proposed Changes
+
+The changes are grouped by system layer and ordered by dependency (Database Seed & DDL $\rightarrow$ Backend Report Modules $\rightarrow$ OpenPyXL Exporters $\rightarrow$ Route & Registry Wiring).
+
+---
+
+### Component 1: Database Seed Scripts & Schema DDL (`tonle1`)
+
+#### [NEW] [seed_asset_ownership_report.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/seed_asset_ownership_report.sql)
+- Register `AssetOwnership` in `MKT_REPORT_ENGINE` and `ASTOWN` in `MKT_FORM`.
+- Optional DDL: Add `InspectionDate`, `InspectionStatus`, `RenewStartDate`, `RenewEndDate`, `CollateralKeepStatus`, `FilingCabinet` to `MKT_COLLATERAL_DE` (`_INAU`, `_HIST`), and `CommentsOther` to `MKT_LOAN_CONTRACT` (`_INAU`, `_HIST`).
+
+#### [MODIFY] [seed_tax_paper_report.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/seed_tax_paper_report.sql)
+- Execute seed into `tonle1` for `MKT_REPORT_ENGINE` (`AssetOwnershipTaxPaper`) and `MKT_FORM` (`TXPRENG`).
+
+#### [NEW] [seed_gps_master_list_report.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/seed_gps_master_list_report.sql)
+- Register `GPSMasterListControl` in `MKT_REPORT_ENGINE` and `GPSMSTRPT` in `MKT_FORM`.
+
+#### [NEW] [seed_gps_unplug_report.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/seed_gps_unplug_report.sql)
+- DDL: Add 10 operational tracking columns to `MKT_GPS_TRACKER`, `MKT_GPS_TRACKER_INAU`, and `MKT_GPS_TRACKER_HIST`.
+- Register `GPSUnplugDaily` in `MKT_REPORT_ENGINE` and `GPSUNPLUG` in `MKT_FORM`.
+
+#### [NEW] [seed_insurance_master_control_report.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/seed_insurance_master_control_report.sql)
+- Register `InsuranceMasterControl` in `MKT_REPORT_ENGINE` and `INSMCR` in `MKT_FORM`.
+
+#### [NEW] [seed_loans_closed_report.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/seed_loans_closed_report.sql)
+- Register `LoansClosedMasterControl` in `MKT_REPORT_ENGINE` and `LNCLS` in `MKT_FORM`.
+
+#### [NEW] [seed_cbc_enquiry_usage_report.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/seed_cbc_enquiry_usage_report.sql)
+- Register `CBCEnquiryUsage` in `MKT_REPORT_ENGINE` and `CBCENQ` in `MKT_FORM`.
+
+#### [NEW] [seed_loan_disbursement_report.sql](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/seed_loan_disbursement_report.sql)
+- Register `TonleLoanDisbursement` in `MKT_REPORT_ENGINE` and `TLNDISB` in `MKT_FORM`.
+
+---
+
+### Component 2: Backend Report Modules & OpenPyXL Exporters (`local/Tonle/Report/`)
+
+#### [MODIFY] [assetownership.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/assetownership.py)
+- Refine 26-column extraction in `getAssetOwnershipData()`.
+- Add `generateAssetOwnershipExcel()` using OpenPyXL with Navy `#1F4E79` header styling, borders, and date formatting.
+- Add route `@app.route('/Morakot/Report/AssetOwnership/Excel')`.
+
+#### [MODIFY] [taxpapercontrol.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/taxpapercontrol.py)
+- Expand `getTaxPaperData()` to union active loans (`MKT_LOAN_CONTRACT`) and closed/written-off loans (`MKT_CLOSED_LOAN`).
+- Fix `Collateral Keep` logic to return `'In TLF'` / `'Not in TLF'`.
+- Implement `Status Trail` logic (`Actived Loan`, `Paid off`, `Write Off`, `AED buy back tractor`).
+- Add `generateTaxPaperControlExcel()` with Gray `#D9D9D9` styling matching the reference template.
+- Add route `@app.route('/Morakot/Report/AssetOwnershipTaxPaper/Excel')`.
+
+#### [NEW] [gpsmasterlist.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/gpsmasterlist.py)
+- Implement `getGPSMasterListData()` querying active and closed loans with overdue amount/DPD calculations.
+- Implement `CustomReport.Listing()` for ReportEngine integration.
+- Implement `exportExcelGPSMasterList()` with Theme 8, Theme 7, and Light Green `#92D050` headers matching `ReportExcel/3_...xlsx`.
+- Add route `@app.route('/Morakot/Report/GPSMasterList/Excel')`.
+
+#### [NEW] [gpsunplug.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/gpsunplug.py)
+- Implement `getGPSUnplugData()` extracting 37 columns (portfolio financials, repayment schedules, overdue metrics, and GPS tracking indicators).
+- Implement `CustomReport.Listing()` for ReportEngine integration.
+- Implement OpenPyXL exporter and direct export route.
+
+#### [NEW] [insurancemastercontrol.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/insurancemastercontrol.py)
+- Implement `getInsuranceMasterData()` extracting all active and closed loans with policy renewal details.
+- Implement multi-sheet OpenPyXL exporter creating Sheet 1 (`Master list` - 19 columns) and Sheet 2 (`Summary` - cross-tab matrix with `=COUNTIF` / `=SUM` formulas).
+- Implement `CustomReport.Listing()` and route `@app.route('/Morakot/Report/InsuranceMasterControl/Excel')`.
+
+#### [NEW] [loansclosedcontrol.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/loansclosedcontrol.py)
+- Implement `getLoansClosedData()` querying `MKT_CLOSED_LOAN`, historical version `@0` for initial baseline maturity, settlement payoff amounts, and document custody release status.
+- Implement OpenPyXL exporter reproducing Cyan `#00B0F0`, Peach `#F3915B`, Magenta `#F71DE7`, and Yellow `#FFFF00` headers.
+- Implement `CustomReport.Listing()` and route `@app.route('/Morakot/Report/LoansClosed/Excel')`.
+
+#### [NEW] [cbcenquiryusage.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/cbcenquiryusage.py)
+- Implement `getEnquiryUsageData()` extracting 18 transaction listing columns from `MKT_CBC` and `MKT_CBC_DE`.
+- Implement `getMonthlySummaryData()` and `getWeeklyReportData()` aggregating enquiry counts by Sales Officer.
+- Implement 7-sheet OpenPyXL exporter (`2026`, `Summary`, `Weekly Report_January` through `Weekly Report_May`) with `=SUBTOTAL(9, ...)` formulas.
+- Implement `CustomReport.Listing()` and route `@app.route('/Morakot/Report/CBCEnquiryUsage/Excel')`.
+
+#### [NEW] [loandisbursement.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/Report/loandisbursement.py)
+- Implement `getLoanDisbursementData()` with comprehensive joins across 19 tables for all 51 loan, asset, pricing, dealer consultant, and GPS parameters.
+- Generate compound reference number `REF. Nº` (`YYYY/ProductType/LoanID/OfficerID`).
+- Implement OpenPyXL exporter reproducing Row 1 (`Tonle Finance`), Row 2 (`Loan Disbursement as of DD/MMM/YYYY`), and 51 formatted columns.
+- Implement `CustomReport.Listing()` and route `@app.route('/Morakot/Report/TonleLoanDisbursement/Excel')`.
+
+---
+
+### Component 3: Module Registry & ORM Models
+
+#### [MODIFY] [models.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/GPSTracker/models.py)
+- Add new columns to SQLAlchemy model `MKT_GPS_TRACKER` and its audit twins (`_INAU`, `_HIST`).
+
+#### [MODIFY] [forms.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/GPSTracker/forms.py)
+- Add optional fields to `FRM_GPS_TRACKER` so tracking status and recovery notes can be maintained from the UI.
+
+#### [MODIFY] [urlregister.py](file:///home/admin/Project/CBS/Tonle/local/Tonle/urlregister.py)
+- Import all report modules:
+  ```python
+  from .Report.assetownership import *
+  from .Report.taxpapercontrol import *
+  from .Report.gpsmasterlist import *
+  from .Report.gpsunplug import *
+  from .Report.insurancemastercontrol import *
+  from .Report.loansclosedcontrol import *
+  from .Report.cbcenquiryusage import *
+  from .Report.loandisbursement import *
+  ```
+
+---
+
+## Verification Plan
+
+### Automated Tests
+1. **Database Schema & Seed Validation**:
+   - Run SQL seed scripts against `tonle1` PostgreSQL database to ensure idempotency and correct registration:
+     ```bash
+     ./venv/bin/python scratch/verify_db_seeds.py
+     ```
+2. **Data Pipeline & Calculation Tests**:
+   - Create test script in `scratch/test_report_suite.py` to execute queries for each of the 8 reports, verifying:
+     - Return code 200 and valid dictionary structure.
+     - Non-empty Pandas DataFrame with exact column names and types.
+     - Proper calculation of arrears, DPD, percentages, reference numbers, and status trails.
+3. **Excel Structure & Formatting Tests**:
+   - For each report, generate an Excel export and verify via OpenPyXL:
+     - Exact sheet names (including multi-sheet workbooks for Reports 5 and 7).
+     - Exact column headers, widths, and ordering.
+     - Cell fill colors, font styles, and Excel formulas (`SUBTOTAL`, `COUNTIF`, `SUM`).
+
+### Manual Verification
+1. Open the Tonle Core Banking System web interface in a browser.
+2. Navigate to each ReportEngine route:
+   - `/Morakot/Reporting/AssetOwnership`
+   - `/Morakot/Reporting/AssetOwnershipTaxPaper`
+   - `/Morakot/Reporting/GPSMasterListControl`
+   - `/Morakot/Reporting/GPSUnplugDaily`
+   - `/Morakot/Reporting/InsuranceMasterControl`
+   - `/Morakot/Reporting/LoansClosedMasterControl`
+   - `/Morakot/Reporting/CBCEnquiryUsage`
+   - `/Morakot/Reporting/TonleLoanDisbursement`
+3. Test search criteria filters (Branch, Date ranges, Loan Status, Officers).
+4. Click "Export to Excel" or trigger direct `/Morakot/Report/.../Excel` download routes and inspect exported `.xlsx` files in spreadsheet software.
